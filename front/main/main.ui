@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>930</width>
-    <height>786</height>
+    <height>934</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,17 +33,20 @@
    <widget class="QLabel" name="minimap">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>70</y>
+      <x>10</x>
+      <y>80</y>
       <width>391</width>
-      <height>311</height>
+      <height>521</height>
      </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
     </property>
     <property name="text">
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="btnSetting">
     <property name="geometry">
      <rect>
       <x>440</x>
@@ -56,7 +59,7 @@
      <string>주차장 설정</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="btnSign">
     <property name="geometry">
      <rect>
       <x>610</x>
@@ -69,7 +72,7 @@
      <string>회원가입</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_3">
+   <widget class="QPushButton" name="btnModify">
     <property name="geometry">
      <rect>
       <x>760</x>
@@ -85,21 +88,24 @@
    <widget class="QLabel" name="cctv">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>110</y>
-      <width>341</width>
-      <height>231</height>
+      <x>470</x>
+      <y>120</y>
+      <width>411</width>
+      <height>351</height>
      </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
     </property>
     <property name="text">
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_4">
+   <widget class="QPushButton" name="btnSearch">
     <property name="geometry">
      <rect>
-      <x>820</x>
-      <y>430</y>
+      <x>810</x>
+      <y>600</y>
       <width>71</width>
       <height>91</height>
      </rect>
@@ -111,8 +117,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>470</x>
-      <y>370</y>
+      <x>460</x>
+      <y>550</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -124,8 +130,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>430</y>
+      <x>450</x>
+      <y>600</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -137,8 +143,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>470</y>
+      <x>480</x>
+      <y>640</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -150,8 +156,8 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>490</x>
-      <y>510</y>
+      <x>480</x>
+      <y>680</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -160,51 +166,51 @@
      <string>이름</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit">
+   <widget class="QLineEdit" name="editCarnum">
     <property name="geometry">
      <rect>
-      <x>550</x>
-      <y>420</y>
+      <x>540</x>
+      <y>590</y>
       <width>113</width>
       <height>25</height>
      </rect>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_2">
+   <widget class="QLineEdit" name="editName">
     <property name="geometry">
      <rect>
-      <x>550</x>
-      <y>500</y>
+      <x>540</x>
+      <y>670</y>
       <width>113</width>
       <height>25</height>
      </rect>
     </property>
    </widget>
-   <widget class="QDateEdit" name="dateEdit">
+   <widget class="QDateEdit" name="dateStart">
     <property name="geometry">
      <rect>
-      <x>550</x>
-      <y>460</y>
+      <x>540</x>
+      <y>630</y>
       <width>110</width>
       <height>26</height>
      </rect>
     </property>
    </widget>
-   <widget class="QTableView" name="tableView">
+   <widget class="QTableView" name="tableParking">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>570</y>
+      <x>450</x>
+      <y>740</y>
       <width>431</width>
       <height>171</height>
      </rect>
     </property>
    </widget>
-   <widget class="QTableView" name="tableView_2">
+   <widget class="QTableView" name="tableEvent">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>570</y>
+      <x>0</x>
+      <y>740</y>
       <width>411</width>
       <height>171</height>
      </rect>
@@ -213,8 +219,8 @@
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>530</y>
+      <x>10</x>
+      <y>700</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -223,21 +229,21 @@
      <string>이벤트</string>
     </property>
    </widget>
-   <widget class="QDateEdit" name="dateEdit_2">
+   <widget class="QDateEdit" name="dateEnd">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>460</y>
+      <x>690</x>
+      <y>630</y>
       <width>110</width>
       <height>26</height>
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_5">
+   <widget class="QPushButton" name="btnEntrance">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>440</y>
+      <x>40</x>
+      <y>630</y>
       <width>101</width>
       <height>51</height>
      </rect>
@@ -246,11 +252,11 @@
      <string>입구 열림</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_6">
+   <widget class="QPushButton" name="btnExit">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>440</y>
+      <x>240</x>
+      <y>630</y>
       <width>101</width>
       <height>51</height>
      </rect>
@@ -259,16 +265,84 @@
      <string>출구 열림</string>
     </property>
    </widget>
-  </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>930</width>
-     <height>22</height>
-    </rect>
-   </property>
+   <widget class="QLabel" name="displayEntrance">
+    <property name="geometry">
+     <rect>
+      <x>230</x>
+      <y>560</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="displayExit">
+    <property name="geometry">
+     <rect>
+      <x>100</x>
+      <y>560</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="displayLed1">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>140</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="displayLed3">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>270</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="displayLed2">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>130</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="dispalyLed4">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>260</y>
+      <width>67</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
