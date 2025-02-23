@@ -9,9 +9,7 @@ import time
 SERVER_IP = "0.0.0.0"
 SERVER_PORT = 5000
 
-client_sockets = {"in": None, "out": None, "admin": None, "parking": None}
-car_count = 4
-park_seq = 1
+client_sockets = {"in": None, "out": None, "admin": None, "parking1": None,"parking2": None,"parking3": None,"parking4": None}
 
 DB_CONFIG = {
     "host": "localhost",
@@ -43,7 +41,7 @@ def tcp_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 🚀 빠른 재시작 가능
     server_socket.bind((SERVER_IP, SERVER_PORT))
-    server_socket.listen(5)
+    server_socket.listen(10)
     print(f"🚀 TCP 서버 실행 중... {SERVER_IP}:{SERVER_PORT}")
 
     while True:
@@ -95,14 +93,144 @@ def handle_client(client_socket, addr):
                     try:
                         jsonData = json.loads(message)
                         print("📌 DB 데이터 수신:\n", json.dumps(jsonData, indent=4, ensure_ascii=False))
-                        if jsonData["type"] == "signup":
+
+                        if jsonData["type"] == "insertUserInfo":
                             jsonData.pop("type", None)
 
                             table_name = "parking_smoothly.user_info"
-                            columns = ", ".join(jsonData.keys())
-                            values = ", ".join(f"'{value}'" if isinstance(value, str) else str(value) for value in jsonData.values())
-                            query = f"INSERT INTO {table_name} ({columns}) VALUES ({values});"
+                            query = f"""
+                                        INSERT INTO {table_name} (
+                                            user_name,
+                                            car_number,
+                                            car_uuid,
+                                            user_phone,
+                                            car_category,
+                                            pass_expiration_date
+                                        ) VALUES (
+                                            '{jsonData["user_name"]}',
+                                            '{jsonData["car_number"]}',
+                                            '{jsonData["car_uuid"]}',
+                                            '{jsonData["user_phone"]}',
+                                            '{jsonData["car_category"]}',
+                                            '{jsonData["pass_expiration_date"]}'
+                                        );
+                                    """
                             resultMessage = executeQuery(query)
+
+                        elif(jsonData["type"] == "selectUserInfo"):
+                            jsonData.pop("type", None)
+                            
+                            table_name = "parking_smoothly.user_info"                            
+                            query = f"""
+                                SELECT 
+                                    user_id,
+                                    user_name,
+                                    car_number,
+                                    car_uuid,
+                                    user_phone,
+                                    car_category,
+                                    pass_expiration_date
+                                FROM {table_name}
+                            """
+
+                            conditions = []
+                            if "user_id" in jsonData:
+                                conditions.append(f"user_id = {jsonData['user_id']}")
+                            if "user_name" in jsonData:
+                                conditions.append(f"user_name = '{jsonData['user_name']}'")
+                            if "car_number" in jsonData:
+                                conditions.append(f"car_number = '{jsonData['car_number']}'")
+                            if "car_uuid" in jsonData:
+                                conditions.append(f"car_uuid = '{jsonData['car_uuid']}'")
+                            if "user_phone" in jsonData:
+                                conditions.append(f"user_phone = '{jsonData['user_phone']}'")
+                            if "car_category" in jsonData:
+                                conditions.append(f"car_category = '{jsonData['car_category']}'")
+                            if "pass_expiration_start" in jsonData and "pass_expiration_end" in jsonData:
+                                conditions.append(f"pass_expiration_date BETWEEN '{jsonData['pass_expiration_start']}' AND '{jsonData['pass_expiration_end']}'")
+
+                            # 조건이 존재하면 WHERE 절 추가
+                            if conditions :
+                                query += " WHERE " + " AND ".join(conditions)
+                            
+                            query += ";"
+
+                            resultMessage = executeQuery(query)
+
+                        elif(jsonData["type"] == "updateUserInfo"):
+                            jsonData.pop("type", None)
+
+                            table_name = "parking_smoothly.user_info"
+
+                            query = f"""
+                                        UPDATE 
+                                            parking_smoothly.user_info
+                                        SET 
+                                            user_name = '{jsonData["user_name"]}',
+                                            car_number = '{jsonData["car_number"]}',
+                                            car_uuid = '{jsonData["car_uuid"]}',
+                                            user_phone = '{jsonData["user_phone"]}',
+                                            car_category = '{jsonData["car_category"]}',
+                                            pass_expiration_date = '{jsonData["pass_expiration_date"]}'
+                                        WHERE user_id = {jsonData[""]};
+                                    """
+                            # resultMessage = executeQuery(query)
+
+                        elif(jsonData["type"] == "selectEvent"):
+                            jsonData.pop("type", None)
+                            
+                            table_name = "parking_smoothly.parking_event_history"
+                            query = f"select * from {table_name};"
+
+                            # resultMessage = executeQuery(query)
+
+                        elif(jsonData["type"] == "selectInOutHistory"):
+                            jsonData.pop("type", None)
+                            
+                            table_name = "parking_smoothly.car_inout_history"                            
+                            query = f"""
+                                SELECT 
+                                    inout_id,
+                                    user_id,
+                                    indatetime,
+                                    in_picture,
+                                    outdatetime,
+                                    out_picture,
+                                    car_number,
+                                    car_uuid,
+                                    parking_pay,
+                                    charging_pay
+                                FROM {table_name}
+                            """
+
+                            conditions = []
+                            
+                            if "inout_id" in jsonData:
+                                conditions.append(f"inout_id = {jsonData['inout_id']}")
+                            if "user_id" in jsonData:
+                                conditions.append(f"user_id = {jsonData['user_id']}")
+                            if "car_number" in jsonData:
+                                conditions.append(f"car_number = '{jsonData['car_number']}'")
+                            if "car_uuid" in jsonData:
+                                conditions.append(f"car_uuid = '{jsonData['car_uuid']}'")
+                            
+                            # 입차시간 및 출차시간 범위 필터링 가능
+                            if "indatetime_start" in jsonData and "indatetime_end" in jsonData:
+                                conditions.append(f"indatetime BETWEEN '{jsonData['indatetime_start']}' AND '{jsonData['indatetime_end']}'")
+                            if "outdatetime_start" in jsonData and "outdatetime_end" in jsonData:
+                                conditions.append(f"outdatetime BETWEEN '{jsonData['outdatetime_start']}' AND '{jsonData['outdatetime_end']}'")
+
+                            # WHERE 절 추가
+                            if conditions:
+                                query += " WHERE " + " AND ".join(conditions)
+                            
+                            query += ";"
+
+                            resultMessage = executeQuery(query)
+
+                        elif(jsonData["type"] == ""):
+                            jsonData.pop("type", None)
+
                         else :
                             print("admin 오류:", message)
                     except json.JSONDecodeError:
@@ -111,37 +239,54 @@ def handle_client(client_socket, addr):
                           if(client_socket != None):
                             client_socket.sendall(json.dumps(resultMessage).encode("utf-8"))
 
-            # 주차 공간
+            # 주차 공간 처리
             elif data.startswith("parking/"):
-                point, category, message = data.split("/",2)
-                
+                point, category, message = data.split("/", 2)
                 print(f"point : {point}, category : {category}, message : {message}")
 
-                if(category.startswith("space")):
-                    print(f"category space")
-                    if(category.startswith("space")):
-                        if(message == "disable"):
-                            car_count = car_count - 1                                                
-                        elif(message == "enable"):
-                            car_count = car_count + 1
-                    if(car_count > 4) : 
-                        car_count = 4
-                    elif(car_count < 0 ):
-                        car_count = 0
+                if category.startswith("space"):
+                    print("category space")
+                    
+                    # "enable"이면 해당 공간을 사용 가능(1), "disable"이면 사용 불가능(0)으로 설정
+                    new_state = None
+                    if message == "disable":
+                        new_state = 0
+                    elif message == "available":
+                        new_state = 1
+                    
+                    if new_state is not None:
+                        # 해당 주차공간(DB의 space_state 테이블에서 space_name과 일치)을 업데이트
+                        table_name = "parking_smoothly.space_state"
+                        update_sql = f"UPDATE {table_name} SET state = {new_state} WHERE space_name = '{category}'"
+                        resultMessage = executeQuery(update_sql)
+                        print(f"DB update result: {resultMessage}")
                         
-                    send_message_to_client("in", str(car_count) + "COUNT")
+                        # 전체 사용 가능한 주차공간의 수를 DB에서 계산 (state 컬럼이 1인 공간의 합)
+                        select_sql = "SELECT SUM(state) as available FROM  parking_smoothly.space_state where state = 1;"
+                        result = executeQuery(select_sql)
+                        print(result)
+                        if result and isinstance(result, list) and len(result) > 0:
+                            car_count = int(result[0]['available'])
+                        else:
+                            car_count = 0
+                        
+                        # 사용 가능 수가 0 ~ 4 사이인지 보정
+                        if car_count > 4:
+                            car_count = 4
+                        elif car_count < 0:
+                            car_count = 0
+                                                
+                        send_message_to_client("in", str(car_count) + "COUNT")
 
-                elif(category.startswith("flame")):
-                    if(message == "detected"):
-                        print(f"message detected")
+                elif category.startswith("flame"):
+                    if message == "detected":
                         print("fire !!!!!!!!!!!!!!!!")
-
                         table_name = "parking_smoothly.parking_event_history"
-                        query = f"INSERT INTO {table_name} (park_seq,event_category) VALUES ({park_seq}, '{category} {message}');"
+                        query = f"INSERT INTO {table_name} (event_category) VALUES ('{category} {message}');"
                         print(query)
                         resultMessage = executeQuery(query)
                         print("{resultMessage : " + str(resultMessage))
-                        # admin에게 화제 발생 전송        
+                        # admin에게 화재 발생 전송        
                         send_message_to_client("admin", "fire detection")
 
     except Exception as e:
@@ -181,6 +326,7 @@ def executeQuery(query):
     finally:      
         cursor.close()
         conn.close()
+
         return response
 
 # ✅ 메시지 전송 후 응답 수신
