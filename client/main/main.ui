@@ -35,8 +35,8 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>391</width>
-      <height>521</height>
+      <width>411</width>
+      <height>661</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -46,52 +46,39 @@
      <string/>
     </property>
    </widget>
-   <widget class="QPushButton" name="btnSetting">
+   <widget class="QPushButton" name="UserInfobtn">
     <property name="geometry">
      <rect>
-      <x>440</x>
-      <y>20</y>
-      <width>131</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>주차장 설정</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnSign">
-    <property name="geometry">
-     <rect>
-      <x>610</x>
+      <x>740</x>
       <y>20</y>
       <width>121</width>
       <height>61</height>
      </rect>
     </property>
     <property name="text">
-     <string>회원가입</string>
+     <string>회원 정보</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="btnModify">
+   <widget class="QPushButton" name="Eventbtn">
     <property name="geometry">
      <rect>
-      <x>760</x>
+      <x>580</x>
       <y>20</y>
       <width>121</width>
       <height>61</height>
      </rect>
     </property>
     <property name="text">
-     <string>정보 수정 </string>
+     <string>이벤트 기록</string>
     </property>
    </widget>
    <widget class="QLabel" name="cctv">
     <property name="geometry">
      <rect>
-      <x>470</x>
+      <x>460</x>
       <y>120</y>
-      <width>411</width>
-      <height>351</height>
+      <width>421</width>
+      <height>401</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -206,29 +193,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTableView" name="tableEvent">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>740</y>
-      <width>411</width>
-      <height>171</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_6">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>700</y>
-      <width>81</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>이벤트</string>
-    </property>
-   </widget>
    <widget class="QDateEdit" name="dateEnd">
     <property name="geometry">
      <rect>
@@ -242,8 +206,8 @@
    <widget class="QPushButton" name="btnEntrance">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>630</y>
+      <x>60</x>
+      <y>790</y>
       <width>101</width>
       <height>51</height>
      </rect>
@@ -255,8 +219,8 @@
    <widget class="QPushButton" name="btnExit">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>630</y>
+      <x>260</x>
+      <y>790</y>
       <width>101</width>
       <height>51</height>
      </rect>
@@ -341,6 +305,19 @@
     </property>
     <property name="text">
      <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="incomeLabel">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>30</y>
+      <width>221</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>n월 정산 : 111,111,111원</string>
     </property>
    </widget>
   </widget>

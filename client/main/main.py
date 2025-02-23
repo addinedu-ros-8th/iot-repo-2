@@ -8,6 +8,7 @@ import cv2, imutils
 import time
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtNetwork import QTcpSocket, QHostAddress
+from PyQt5.QtCore import QDate
 from PyQt5.QtCore import QTimer
 
 import warnings
@@ -66,7 +67,7 @@ class SocketManager:
         if cls._instance is None:
             cls._instance = super(SocketManager, cls).__new__(cls)
             cls.socket = QTcpSocket()  # 하나의 소켓만 생성
-            cls.socket.connectToHost(QHostAddress("192.168.0.22"), 5000)
+            cls.socket.connectToHost(QHostAddress("kimmossi.tplinkdns.com:5000/"), 5000)
             if not cls.socket.waitForConnected(3000):  # 3초 대기 후 연결 확인
                 print(":x: 서버 연결 실패:", cls.socket.errorString())
         return cls._instance
@@ -98,27 +99,144 @@ class SocketThread(QThread):
         self.quit()
         self.wait()
 
-# :small_blue_diamond: 회원가입 UI
-class SignWindow(QMainWindow):
+# 관리자 로그인 
+class adminLoginWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("main/sign.ui", self)
-        self.btnSign.clicked.connect(self.signup)
+        uic.loadUi("main/adminLogin.ui", self)
+        
+        # 공유 소켓을 사용하는 응답 수신 스레드 실행
+        # self.socket_thread = SocketThread()
+        # self.socket_thread.data_received.connect(self.handle_response)
+        # self.socket_thread.start()
+
+        self.id = ""
+        self.pw = ""
+
+        self.Loginbtn.clicked.connect(self.checkadmin)
+
+    def checkadmin(self):
+        input_id = self.IDEdit.text() if isinstance(self.IDEdit, QLineEdit) else ""
+        input_pw = self.PWEdit.text() if isinstance(self.PWEdit, QLineEdit) else ""
+        
+        if input_id == self.id and input_pw == self.pw:
+            self.open_admin_window()
+        else:
+            QMessageBox.warning(self, "로그인 실패", "ID 또는 비밀번호가 다릅니다.")
+
+    def open_admin_window(self):
+        stream_url = "http://172.28.219.150:5001/feed1"
+        self.admin_window = WindowClass(stream_url)
+        self.admin_window.show()
+        self.close()
+
+#이벤트 기록 
+class EventWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("main/EventInfo.ui", self)
         # 공유 소켓을 사용하는 응답 수신 스레드 실행
         self.socket_thread = SocketThread()
         self.socket_thread.data_received.connect(self.handle_response)
         self.socket_thread.start()
-    def signup(self):
+
+        self.conformbtn.clicked.connect(self.close)
+
+    def handle_response(self, response):
+        print(":inbox_tray: 서버 응답:", response)
+        try:
+            response_data = json.loads(response)
+            QMessageBox.information(self, "응답", f"서버 메시지: {response_data.get('message', '응답 없음')}")
+            
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "오류", "잘못된 서버 응답")
+                
+    def closeEvent(self, event):
+        """ 창을 닫을 때 스레드 종료 """
+        self.socket_thread.stop()
+        event.accept()
+
+# 유저인포 
+class UserInfoWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("main/UserInfo.ui", self)
+        # 공유 소켓을 사용하는 응답 수신 스레드 실행
+        self.socket_thread = SocketThread()
+        self.socket_thread.data_received.connect(self.handle_response)
+        self.socket_thread.start()
+
+        # 버튼
+        self.SignUserInfobtn.clicked.connect(self.openSignUserInfo)
+        self.updateUserInfobtn.clicked.connect(self.OpenupdateUserInfo)
+
+        #조회 
+        # self.searchbtn.clicked.connect(self.search)
+        
+        #close 
+        self.conformbtn.clicked.connect(self.close)
+
+    def openSignUserInfo(self):
+        self.SignUserInfoWindow = SignUserInfoWindow()
+        self.SignUserInfoWindow.show()          
+
+    def OpenupdateUserInfo(self):
+            self.updateUserInfoWindow = updateUserInfoWindow()
+            self.updateUserInfoWindow.show()  
+
+    def handle_response(self, response):
+        print(":inbox_tray: 서버 응답:", response)
+        try:
+            response_data = json.loads(response)
+            QMessageBox.information(self, "응답", f"서버 메시지: {response_data.get('message', '응답 없음')}")
+            
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "오류", "잘못된 서버 응답")
+                
+    def closeEvent(self, event):
+        """ 창을 닫을 때 스레드 종료 """
+        self.socket_thread.stop()
+        event.accept()
+        
+
+
+
+
+
+# :small_blue_diamond: 회원가입 
+class SignUserInfoWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("main/SignUserInfo.ui", self)
+        self.btnSign.clicked.connect(self.insertUserInfo)
+        self.Editcategory.clear()
+        self.Editcategory.addItems(["일반차", "전기차"])  
+
+        # 날짜 선택 위젯 설정
+        self.EditEnd.setCalendarPopup(True)  # 달력 팝업 활성화
+        self.EditEnd.setDate(QDate.currentDate())  # 기본값: 오늘 날짜
+
+        # 버튼 클릭 시 정보 전송
+        self.btnSign.clicked.connect(self.insertUserInfo)
+
+        # 공유 소켓을 사용하는 응답 수신 스레드 실행
+        self.socket_thread = SocketThread()
+        self.socket_thread.data_received.connect(self.handle_response)
+        self.socket_thread.start()
+
+    
+    def insertUserInfo(self):
         user_data = {
             "park_seq": PARK_SEQ,
-            "type": "SingUp",
+            "type": "insertUserInfo",
             "user_name": self.Editname.text(),
             "car_number": self.Editcarnum.text(),
             "car_rfid": self.EditRFID.text(),
             "user_phone": self.Editnum.text(),
-            "car_category": self.Editcategory.text(),
-            "pass_expiration_date": self.EditEnd.text()
+            "car_category": self.Editcategory.currentText(),  
+            "pass_expiration_date": self.EditEnd.date().toString("yyyy-MM-dd")  
         }
+        SocketManager().send_data(user_data)
         SocketManager().send_data(user_data)
 
     def handle_response(self, response):
@@ -134,56 +252,23 @@ class SignWindow(QMainWindow):
         self.socket_thread.stop()
         event.accept()
 
-# 주차장 설정 
-class SettingWindow(QMainWindow):
+# 회원 정보 수정 
+class updateUserInfoWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("main/setting.ui", self)
+        uic.loadUi("main/updateUserInfo.ui", self)
 
-        self.btnSettingConfirm.clicked.connect(self.parksetting)
-        self.socket = QTcpSocket(self)
-
-    def parksetting(self):
-
-        user_data = {
-            "park_seq":PARK_SEQ,
-            "type" : "parking_setting",
-            "park_name" : self.editparkname.text()
-        }
-
-        json_data = "admin/"+json.dumps(user_data)
-        print("Sending : ", json_data)
-
-        self.socket.connectToHost(QHostAddress("192.168.0.22"), 5000) 
-        
-        if self.socket.waitForConnected(3000):  # 3초 대기
-            self.socket.write(json_data.encode('utf-8'))
-            self.socket.flush()
-            print("주차장 설정 데이터 전송 완료")
-
-            QTimer.singleShot(100, self.close)
-        else:
-            print("서버 연결 실패:", self.socket.errorString())
-            QTimer.singleShot(100, self.close)
-
-
-# 정보 수정 
-class ModifyWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        uic.loadUi("main/modify.ui", self)
-
-        self.btnModify.clicked.connect(self.modify)
+        self.btnModify.clicked.connect(self.selectUserInfo)
         self.socket = QTcpSocket(self)
         
         self.groupBox.setVisible(False)  # 처음엔 숨김
 
 
-    def modify(self):
+    def selectUserInfo(self):
 
         user_data = {
             "park_seq":PARK_SEQ,
-           "type" : "modify",
+           "type" : "selectUserInfo",
             "user_name": self.EditMname.text(),
             "car_number": self.EditMcarnum.text()
         }
@@ -202,13 +287,13 @@ class ModifyWindow(QMainWindow):
             print("서버 연결 실패:", self.socket.errorString())
 
 
-#화재경보 
-# class FireWindow(QMainWindow):
-#     def __init__(self):
-#         super().__init__()
-#         uic.loadUi("main/fire.ui", self)
+# 화재경보 
+class FireWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("main/fire.ui", self)
         
-#         self.conformbtn.clicked.
+        self.pushButton.clicked.connect(self.close)
 
 
 
@@ -226,10 +311,8 @@ class WindowClass(QMainWindow, from_class):
 
         #BTN
         self.btnEntrance.clicked.connect(self.EntranceDoor) # 입구열림
-        self.btnExit.clicked.connect(self.ExitDoor) # 출구 열림
-        self.btnSetting.clicked.connect(self.OpenSetting) # 주차장 설정  
-        self.btnSign.clicked.connect(self.OpenSign) # 회원가입
-        self.btnModify.clicked.connect(self.OpenModify) # 정보 수정
+        self.Eventbtn.clicked.connect(self.EnterEventInfo) # 이벤트
+        self.UserInfobtn.clicked.connect(self.EnterUserInfo) # 유저 정보 
         # self.btnSearch.clicked.connect(self.OpenSearch) # 조회버튼
 
         # TCP / IP 
@@ -259,10 +342,16 @@ class WindowClass(QMainWindow, from_class):
     #     park_3 == 0
     #     park_4 == 0 
 
+    # 이벤트 기록 창 열기 
+    def EnterEventInfo(self): 
+        self.event_window = EventWindow()
+        self.event_window.show()
+    
+    #유저 인포 창 열기 
+    def EnterUserInfo(self): 
+        self.userinfo_window = UserInfoWindow()
+        self.userinfo_window.show()
         
-        
-        
-
 
 
     #입구 열림
@@ -317,25 +406,6 @@ class WindowClass(QMainWindow, from_class):
 
 
 
-
-    # 주차장 설정 새 창 열기 
-    def OpenSetting(self):
-        self.setting_window = SettingWindow()
-        self.setting_window.show()
-
-
-    
-    # 회원가입 창 열기 
-    def OpenSign(self):
-        self.sign_window = SignWindow()
-        self.sign_window.show()
-
-    
-    # 정보 수정 창 열기 
-    def OpenModify(self): 
-        self.modify_window = ModifyWindow()
-        self.modify_window.show()
-
     
     # cctv
     def cameraStart(self, qimage):
@@ -355,6 +425,6 @@ class WindowClass(QMainWindow, from_class):
 if __name__ == "__main__":
     stream_url = "http://172.28.219.150:5001/feed1"
     app = QApplication(sys.argv)
-    myWindows = WindowClass(stream_url)
+    myWindows = adminLoginWindow()
     myWindows.show()
     sys.exit(app.exec_())
