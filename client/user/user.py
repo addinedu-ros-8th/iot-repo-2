@@ -20,8 +20,8 @@ class NetworkThread(QThread):
         self.socket = QTcpSocket()
         self.socket.readyRead.connect(self.read_response)
 
-    def connect_server(self, ip="192.168.0.22", port=5000):
-        self.socket.connectToHost(QHostAddress(ip), port)
+    def connect_server(self, ip="kimmossi.tplinkdns.com", port=5000):
+        self.socket.connectToHost(ip, port)
         if not self.socket.waitForConnected(3000):  
             print("서버 연결 실패:", self.socket.errorString())
 
@@ -66,7 +66,7 @@ class WindowClass(QMainWindow, from_class):
     def searchuser(self):
         user_data = {
             "park_seq": PARK_SEQ,
-            "type": "userGUI_Search",
+            "type": "userGUI_search",
             "user_name": self.editName.text(),
             "car_number": self.editCarnum.text()
         }

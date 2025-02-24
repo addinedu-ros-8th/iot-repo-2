@@ -86,16 +86,6 @@
      </rect>
     </property>
    </widget>
-   <widget class="QTableView" name="Usertable">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>260</y>
-      <width>901</width>
-      <height>241</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QPushButton" name="searchbtn">
     <property name="geometry">
      <rect>
@@ -133,6 +123,16 @@
     </property>
     <property name="text">
      <string>회원수정</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="Usertable">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>250</y>
+      <width>891</width>
+      <height>261</height>
+     </rect>
     </property>
    </widget>
   </widget>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>930</width>
-    <height>934</height>
+    <height>808</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,7 +36,7 @@
       <x>10</x>
       <y>80</y>
       <width>411</width>
-      <height>661</height>
+      <height>491</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -49,8 +49,8 @@
    <widget class="QPushButton" name="UserInfobtn">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>20</y>
+      <x>770</x>
+      <y>10</y>
       <width>121</width>
       <height>61</height>
      </rect>
@@ -59,24 +59,11 @@
      <string>회원 정보</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Eventbtn">
-    <property name="geometry">
-     <rect>
-      <x>580</x>
-      <y>20</y>
-      <width>121</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>이벤트 기록</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="cctv">
     <property name="geometry">
      <rect>
       <x>460</x>
-      <y>120</y>
+      <y>100</y>
       <width>421</width>
       <height>401</height>
      </rect>
@@ -91,8 +78,8 @@
    <widget class="QPushButton" name="btnSearch">
     <property name="geometry">
      <rect>
-      <x>810</x>
-      <y>600</y>
+      <x>370</x>
+      <y>650</y>
       <width>71</width>
       <height>91</height>
      </rect>
@@ -104,8 +91,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>550</y>
+      <x>20</x>
+      <y>600</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -117,8 +104,8 @@
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>600</y>
+      <x>10</x>
+      <y>650</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -130,8 +117,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>480</x>
-      <y>640</y>
+      <x>40</x>
+      <y>690</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -143,8 +130,8 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>480</x>
-      <y>680</y>
+      <x>40</x>
+      <y>730</y>
       <width>81</width>
       <height>16</height>
      </rect>
@@ -156,8 +143,8 @@
    <widget class="QLineEdit" name="editCarnum">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>590</y>
+      <x>100</x>
+      <y>640</y>
       <width>113</width>
       <height>25</height>
      </rect>
@@ -166,8 +153,8 @@
    <widget class="QLineEdit" name="editName">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>670</y>
+      <x>100</x>
+      <y>720</y>
       <width>113</width>
       <height>25</height>
      </rect>
@@ -176,8 +163,8 @@
    <widget class="QDateEdit" name="dateStart">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>630</y>
+      <x>100</x>
+      <y>680</y>
       <width>110</width>
       <height>26</height>
      </rect>
@@ -186,73 +173,21 @@
    <widget class="QTableView" name="tableParking">
     <property name="geometry">
      <rect>
-      <x>450</x>
-      <y>740</y>
-      <width>431</width>
-      <height>171</height>
+      <x>460</x>
+      <y>600</y>
+      <width>451</width>
+      <height>151</height>
      </rect>
     </property>
    </widget>
    <widget class="QDateEdit" name="dateEnd">
     <property name="geometry">
      <rect>
-      <x>690</x>
-      <y>630</y>
+      <x>230</x>
+      <y>680</y>
       <width>110</width>
       <height>26</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnEntrance">
-    <property name="geometry">
-     <rect>
-      <x>60</x>
-      <y>790</y>
-      <width>101</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>입구 열림</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btnExit">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>790</y>
-      <width>101</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>출구 열림</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="displayEntrance">
-    <property name="geometry">
-     <rect>
-      <x>230</x>
-      <y>560</y>
-      <width>67</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="displayExit">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>560</y>
-      <width>67</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
     </property>
    </widget>
    <widget class="QLabel" name="displayLed1">
@@ -307,17 +242,66 @@
      <string/>
     </property>
    </widget>
-   <widget class="QLabel" name="incomeLabel">
+   <widget class="QPushButton" name="leftbtn">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>30</y>
-      <width>221</width>
-      <height>21</height>
+      <x>470</x>
+      <y>520</y>
+      <width>91</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>n월 정산 : 111,111,111원</string>
+     <string>←</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="rightbtn">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>520</y>
+      <width>91</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>→</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="savebtn">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>530</y>
+      <width>121</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>파일 저장</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="eventcombo">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>600</y>
+      <width>131</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>600</y>
+      <width>81</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>이벤트 종류</string>
     </property>
    </widget>
   </widget>
