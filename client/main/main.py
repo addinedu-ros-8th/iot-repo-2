@@ -3,6 +3,7 @@ import json
 import time
 import warnings
 import cv2  # CameraThread에서 사용
+from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread, pyqtSignal, QDate
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView, QLineEdit
 from PyQt5.QtGui import QPixmap, QImage
@@ -199,9 +200,14 @@ class WindowClass(QMainWindow, from_class):
         self.Start()
 
         # 미니맵 및 LED 이미지 설정
-        self.pixmap.load('data/minimap.png')
+        self.pixmap.load('data/minimapimg.png')
         self.minimap.setPixmap(self.pixmap)
-        self.minimap.resize(self.pixmap.width(), self.pixmap.height())
+        # QLabel 크기에 맞게 이미지 조정
+        self.scaled_pixmap = self.pixmap.scaled(self.minimap.size(), 
+                                           Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.minimap.setPixmap(self.scaled_pixmap)
+        self.minimap.resize(self.scaled_pixmap.width(), self.scaled_pixmap.height())
+    
         self.parkingstate = QPixmap("data/parkingimg.png")
         self.vacantstate = QPixmap("data/vacant.png")
         self.displayLed1.setPixmap(self.vacantstate)
