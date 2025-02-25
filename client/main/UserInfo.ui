@@ -128,10 +128,10 @@
    <widget class="QTableWidget" name="Usertable">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>70</x>
       <y>250</y>
-      <width>891</width>
-      <height>261</height>
+      <width>801</width>
+      <height>241</height>
      </rect>
     </property>
    </widget>

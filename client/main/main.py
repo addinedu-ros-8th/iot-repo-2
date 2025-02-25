@@ -200,14 +200,18 @@ class UserInfoWindow(QMainWindow):
 
     # 서버에서 DB 정보 받아와 테이블 출력 
     def visibleUserInfo (self, response_data): 
+        column_names = ["주차장 ID", "이름", "차량 번호", "차량 UUID", "전화번호", "차량 종류", "정기권 시작일", "정기권 만기일"]
+
         print(f"📊 테이블에 출력할 데이터: {response_data}")  # 디버깅용
         self.Usertable.setRowCount(len(response_data))  # 행 개수 설정
-        self.Usertable.setColumnCount(len(response_data[0]))  # 컬럼 개수 설정 (딕셔너리 키 개수)
-        self.Usertable.setHorizontalHeaderLabels(response_data[0].keys())  # 헤더 설정
+        self.Usertable.setColumnCount(len(column_names))  # 컬럼 개수 설정 (딕셔너리 키 개수)
+        self.Usertable.setHorizontalHeaderLabels(column_names)  # 헤더 설정
         for row, item in enumerate(response_data):
             for col, key in enumerate(item.keys()):
                 self.Usertable.setItem(row, col, QTableWidgetItem(str(item[key])))  # 데이터 삽입
-        
+
+        self.Usertable.resizeColumnsToContents()        
+        self.Usertable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         print("\n전송 완료")
         
         # for item in response_data:
@@ -282,6 +286,8 @@ class updateUserInfoWindow(QMainWindow):
         super().__init__()
         uic.loadUi("main/updateUserInfo.ui", self)
 
+        self.currentRequestType = None
+
         #btn 
         self.btnSearch.clicked.connect(self.selectUserInfo)
         self.btnupdate.clicked.connect(self.UpdateUserInfo)
@@ -314,29 +320,12 @@ class updateUserInfoWindow(QMainWindow):
         
         self.network_thread.send_data(user_data)
         self.groupBox.setVisible(True)
-        self.visibleUserInfo()
-
-        
-    def handle_response(self, response):
-        print(f"Server Response: {response}")
-        try:
-            response_data = json.loads(response)
-            if not response_data:  # 빈 리스트일 경우
-                QMessageBox.information(self, "응답", "서버에서 일치하는 데이터를 찾지 못했습니다.")
-            else:
-                QMessageBox.information(self, "응답", f"서버에서 {len(response_data)}개의 결과를 받았습니다.")
-        except json.JSONDecodeError:
-            QMessageBox.warning(self, "오류", "잘못된 서버 응답")
-
-    def visibleUserInfo(self):
-        """유저 정보 받아와 보여주기"""
-        print("정보 출력")
 
     def UpdateUserInfo(self):
         """User Data 보내주기"""
         user_data = {
             "park_id" : Park_ID ,
-            "type": "UpdateUserInfo",
+            "type": "updateUserInfo",
             "user_name": self.Editname.text(),
             "car_number": self.Editcarnum.text(),
             "car_uuid": self.Edituuid.text(),
@@ -348,14 +337,84 @@ class updateUserInfoWindow(QMainWindow):
 
         self.network_thread.send_data(user_data)
 
-        #만일 수정 성공시
-        #     수정 성공이라 떠주고 
-        #      종료 
-        #만일 수정 실패시 
-        #     수정실패라 뜨고 
-        #     다시 연결 시도
 
-        self.btnupdate.clicked.connect(self.close)
+    def handle_response(self, response):
+        print(f"Server Response: {response}")
+        print(f"Current Request Type: {self.currentRequestType}")
+        try:
+            response_data = json.loads(response)
+        except json.JSONDecodeError:
+            QMessageBox.warning(self, "오류", "잘못된 서버 응답 (JSON 파싱 실패)")
+            return
+
+        # currentRequestType에 따라 분기 처리
+        if self.currentRequestType == "selectUserInfo":
+            self.handle_select_response(response_data)
+
+        elif self.currentRequestType == "updateUserInfo":
+            self.handle_update_response(response_data)
+
+        else:
+            print(response_data)
+            self.handle_select_response(response_data)
+
+    def handle_select_response(self, response_data):
+        """조회 응답 처리"""
+        if not response_data:
+            QMessageBox.information(self, "응답", "서버에서 일치하는 데이터를 찾지 못했습니다.")
+            return
+
+        if isinstance(response_data, list) and response_data:
+            response_data = response_data[0]
+        elif not isinstance(response_data, dict):
+            # 예상치 못한 형식이면 그대로 반환
+            QMessageBox.warning(self, "오류", "조회 결과가 딕셔너리 형식이 아닙니다.")
+            return
+
+        # groupBox 표시
+        self.groupBox.setVisible(True)
+
+        # 조회된 값을 UI에 채워넣기
+        self.Edituuid.setText(response_data.get("user_id", ""))
+        self.Editname.setText(response_data.get("user_name", ""))
+        self.Editcarnum.setText(response_data.get("car_number", ""))
+        self.Edituuid.setText(response_data.get("car_uuid", ""))
+        self.Editnum.setText(response_data.get("user_phone", ""))
+
+
+        # 콤보박스 값 설정 (없으면 기본값)
+        category = response_data.get("car_category", "일반차")
+        if category in ["일반차", "전기차"]:
+            self.Editcategory.setCurrentText(category)
+        else:
+            self.Editcategory.setCurrentIndex(0)
+
+        # 날짜 문자열 -> QDate로 변환
+        start_str = response_data.get("pass_start_date", "")
+        end_str = response_data.get("pass_expiration_date", "")
+
+        if start_str:
+            try:
+                year, month, day = map(int, start_str.split("-"))
+                self.EditStart.setDate(QDate(year, month, day))
+            except ValueError:
+                pass  # 변환 실패하면 무시
+
+        if end_str:
+            try:
+                year, month, day = map(int, end_str.split("-"))
+                self.EditEnd.setDate(QDate(year, month, day))
+            except ValueError:
+                pass
+
+    def handle_update_response(self, response_data):
+        """수정 응답 처리"""
+        if isinstance(response_data, dict) and response_data.get("result") == "success":
+            QMessageBox.information(self, "성공", "회원 정보 수정이 완료되었습니다.")
+            self.close()  # 창 닫기
+        else:
+            QMessageBox.warning(self, "실패", "회원 정보 수정에 실패했습니다.")
+
 
 
 
@@ -386,6 +445,7 @@ class WindowClass(QMainWindow, from_class):
         self.network_thread = NetworkThread()
         self.network_thread.data_received.connect(self.handle_response)
         self.network_thread.connect_server()
+        self.Start()
 
     # 유저 데이터 
         self.eventcombo.clear()
@@ -399,47 +459,63 @@ class WindowClass(QMainWindow, from_class):
 
 
     #미니맵
+   #미니맵
         self.pixmap = QPixmap()
         self.pixmap.load('data/minimap.png')
         self.minimap.setPixmap(self.pixmap)
         self.minimap.resize(self.pixmap.width(), self.pixmap.height())
-
-        self.minimapdisplay()
-
-    # 미니맵 제어 
-    def minimapdisplay(self): 
+        
         self.parkingstate = QPixmap("data/parkingimg.png")
         self.vacantstate = QPixmap("data/vacant.png")
         """기본 상태 vacant 세팅"""
-        # self.display_led1.setPixmap(self.vacantstate)
-        # self.display_led2.setPixmap(self.vacantstate)
-        # self.display_led3.setPixmap(self.vacantstate)
-        # self.display_led4.setPixmap(self.vacantstate)
+        self.displayLed1.setPixmap(self.vacantstate)
+        self.displayLed2.setPixmap(self.vacantstate)
+        self.displayLed3.setPixmap(self.vacantstate)
+        self.dispalyLed4.setPixmap(self.vacantstate)
 
+        self.getParkingstate()
 
+    def getParkingstate(self) : 
+        """주차공간상태요청"""
+        user_data = {
+            "park_id" : Park_ID ,
+            "type": "selectspacestate",
+        }
+
+        self.network_thread.send_data(user_data)
+
+    # 미니맵 제어 
+    def minimapdisplay(self, response_data): 
+        self.parkingstate = QPixmap("data/parkingimg.png")
+        self.vacantstate = QPixmap("data/vacant.png")
         """ 서버서 정보 실시간으로 받아오기 """
-        # parking_status = [0, 1, 2]  
-        # 1 = parking, 0 = vacant, 2 = fire
-        
-        # display_leds = [self.displayLed1, self.displayLed2, self.displayLed3, self.displayLed4]
-        
-        # for i in range(len(parking_status)):
-        #     if parking_status[i] == 1:  # 주차 중
-        #         display_leds[i].setPixmap(self.parkingstate)
-        #     elif parking_status[i] == 0:  # 빈 자리
-        #         display_leds[i].setPixmap(self.vacantstate)
-        #     elif parking_status[i] == 2:  # 화재 발생
-        #         display_leds[i].setPixmap(self.firestate)
-        #         # 불났다고 서버에 전송하는 로직 추가
-        #         self.send_fire_alert(i + 1)  
-        #     else:
-        #         print(f"Error: 주차장 {i+1} 상태 값 오류")
+        led_mapping = {
+            "space1": self.displayLed1,
+            "space2": self.displayLed2,
+            "space3": self.displayLed3,
+            "space4": self.displayLed4
+        }
+        if not isinstance(response_data, list):
+            print("🚨 응답이 리스트 형식이 아님:", response_data)
+            return
+        for row in response_data:
+            space_name = row.get("space_name")  # 예: 'space1'
+            state = row.get("state")           # 예: 1 또는 0
+
+        # 4) 해당 space_name에 대응되는 LED 라벨 가져오기
+        led_label = led_mapping.get(space_name)
+        if led_label is None:
+            print(f"🚨 매핑되지 않은 space_name: {space_name}")
+
+        # 5) state가 1이면 parking 이미지를, 0이면 vacant 이미지를 세팅
+        if state == 1:
+            led_label.setPixmap(self.parkingstate)
+        else:
+            led_label.setPixmap(self.vacantstate)
+
+
     
-    # def send_fire_alert(self, parking_lot_number):
-    #     """ 화재 발생 시 서버에 알림 전송 """
-    #     alert_message = {"event": "fire", "parking_lot": parking_lot_number}
-    #     self.network_thread.send_data(json.dumps(alert_message))
-        
+
 
     # 입출차 기록 정보 보내기 
     def selectInOutHistory(self):
@@ -449,23 +525,49 @@ class WindowClass(QMainWindow, from_class):
             "type": "selectInOutHistory",
             "user_name": self.editName.text(),
             "car_number": self.editCarnum.text(),
-            "car_category": self.eventcombo.currentText(),  
-            "pass_start_date": self.dateStart.date().toString("yyyy-MM-dd"), 
-            "pass_expiration_date": self.dateEnd.date().toString("yyyy-MM-dd"),
+            "event_category": self.eventcombo.currentText(),  
+            "pass_start_date": self.dateStart.date().toString("yyyy-MM-dd-HH:mm:ss"), 
+            "pass_expiration_date": self.dateEnd.date().toString("yyyy-MM-dd-HH:mm:ss"),
 
         }
 
         self.network_thread.send_data(user_data)
-        self.visibleInOutHistory()
     
     # 서버에서 DB 정보 받아와 테이블 출력 
-    def visibleInOutHistory (self): 
-        print("정보 출력")
-        # data = {
-        #     "type" : self.
-        # }
+    def visibleInOutHistory (self, response_data): 
+        for item in response_data:
+            print(f"이름: {item['user_name']}, 차량번호: {item['car_number']}")
+            print("\n")
+            print("------------------------------------------------------")
+
+        if not isinstance(response_data, list) or not response_data:
+            QMessageBox.information(self, "응답", "서버에서 일치하는 데이터를 찾지 못했습니다.")
+            self.InoutTable.setRowCount(0)  # 테이블 초기화
+            return
+            
+        column_names = list(response_data[0].keys())  # 첫 번째 항목의 키를 컬럼 이름으로 사용
+        self.InoutTable.setRowCount(len(response_data))
+        self.InoutTable.setColumnCount(len(column_names))
+        self.InoutTable.setHorizontalHeaderLabels(column_names)
+        
+        for row, item in enumerate(response_data):
+            for col, key in enumerate(column_names):
+                self.InoutTable.setItem(row, col, QTableWidgetItem(str(item.get(key, ""))))  # 값이 없으면 빈 문자열
+        
+        self.InoutTable.resizeColumnsToContents()
+        self.InoutTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        print("\n📊 테이블 데이터 출력 완료")
 
 
+    def Start(self):
+        """시작하면 주차장 상황 정보를 받기위해 """
+        user_data = {
+            "admin1": 'admin1',
+            "park_id" : Park_ID , 
+            "type" : "ping"
+        }
+
+        self.network_thread.send_data(user_data)
 
 
     # 네트워크 관리 
@@ -475,8 +577,17 @@ class WindowClass(QMainWindow, from_class):
             response_data = json.loads(response)
             if not response_data:  # 빈 리스트일 경우
                 QMessageBox.information(self, "응답", "서버에서 일치하는 데이터를 찾지 못했습니다.")
+            elif isinstance(response_data, str):
+                # 단순 텍스트인 경우, lineEdit에 출력
+                self.lineEdit.setText(response_data)
+                print("서버에서 받은 단순 텍스트 응답:", response_data)
+            elif all(key in response_data for key in ["space1", "space2", "space3", "space4"]):
+                self.minimapdisplay(response_data)
+                print("서버에서 받은 미니맵 데이터 :", response_data)
             else:
                 QMessageBox.information(self, "응답", f"서버에서 {len(response_data)}개의 결과를 받았습니다.")
+                self.visibleInOutHistory(response_data)
+
         except json.JSONDecodeError:
             QMessageBox.warning(self, "오류", "잘못된 서버 응답")
 
