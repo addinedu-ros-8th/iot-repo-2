@@ -105,22 +105,24 @@
 ![IMG_9657 (1)](https://github.com/user-attachments/assets/85c8c2e2-75e2-4a43-ae8e-26b423895af4)
 
 
-
 ### 만차
 ![IMG_9669 (1)](https://github.com/user-attachments/assets/669ec910-cd9c-47a8-9073-3a0467950287)
 
 
-
-
-
-## 1-2. 출구 
+### 1-2. 출구 
 
 
 
 ## 2. GUI
 
+### 2-0. 로그인
+![image](https://github.com/user-attachments/assets/53a1c861-e2ce-47a0-b688-776e17e3999b)
+
+
+
 ### 2-1. 메인화면
 ![image](https://github.com/user-attachments/assets/c8f395d0-fe1d-4d14-a025-27e99a638458)
+
 
 
 ![image](https://github.com/user-attachments/assets/471452fa-03bf-4e94-be7c-3c4667ca732d)
@@ -136,8 +138,42 @@
 ![image](https://github.com/user-attachments/assets/45708cd9-54db-469e-9f36-a94c8caaa962)
 
 
+
 ### 2-4.회원수정 
 ![image](https://github.com/user-attachments/assets/892d46e5-c405-441a-a3e1-41690fb19d70)
 
 
 
+### 2-6. 화재 알람
+![image](https://github.com/user-attachments/assets/f18b5eea-132b-4eb6-ad51-a6d975a35bad)
+
+
+![image](https://github.com/user-attachments/assets/ec0b8652-af47-40d1-9a57-78ec0c2d1fcf)
+자동 저장 기능 
+
+
+### 2-7. 이벤트 기록
+![image](https://github.com/user-attachments/assets/f6c2025b-c2bb-43d3-9a9e-3cbffeb7562e)
+
+
+
+## 3. User GUI 
+
+
+## 3-1. main User GUI  
+![image](https://github.com/user-attachments/assets/222a1f6a-2226-4424-8fe5-6399cd5a83e2)
+
+
+### 3-1-1. 입출차 기록이 없는 경우
+![image](https://github.com/user-attachments/assets/d1513e8a-5101-40d9-adb4-d1d7f1193d7f)
+
+
+
+### 3-1-2. 출차 기록이 없는 경우
+![image](https://github.com/user-attachments/assets/5e7330a3-ceeb-43fa-924b-495148e746d4)
+
+
+
+### 3-1-3. 입출차 기록이 없는 경우
+마지막 기록으로 보여준다
+![image](https://github.com/user-attachments/assets/92d7192f-42fa-4c8e-8b40-5656aeb44514)
