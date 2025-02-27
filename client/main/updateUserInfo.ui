@@ -196,14 +196,14 @@
     <widget class="QLabel" name="label_7">
      <property name="geometry">
       <rect>
-       <x>0</x>
+       <x>10</x>
        <y>260</y>
        <width>101</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>유저아이디</string>
+      <string>차량 UUID</string>
      </property>
     </widget>
     <widget class="QLineEdit" name="Editname">

@@ -99,7 +99,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>유저 아이디</string>
+     <string>차량 UUID</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
