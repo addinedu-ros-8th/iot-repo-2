@@ -63,7 +63,7 @@ def tcp_server():
 def perform_ocr():
     print("📷 OCR 시작...")
     
-    camera_url = 'http://192.168.102.249:5001/feed1'
+    camera_url = 'http://192.168.102.150:5001/feed2'
     cap = cv2.VideoCapture(camera_url)
     
     if not cap.isOpened():
@@ -421,6 +421,24 @@ def handle_client(client_socket, addr):
                         result = {"park_id": 1, "type": "pong"}
                     
 
+                    elif request_type == "selectUserHistory":                        
+                        query = f"""
+                                    SELECT 
+                                        ui.user_name,
+                                        ui.car_number,
+                                        ui.car_category,
+                                        ui.pass_start_date,
+                                        ui.pass_expiration_date,
+                                        ch.indatetime,
+                                        ch.outdatetime
+                                    FROM user_info ui
+                                    LEFT JOIN car_inout_history ch 
+                                        ON ui.car_number = ch.inout_car_number
+                                    WHERE ui.car_number = '{jsonData['car_number']}'
+                                    ORDER BY ch.indatetime DESC
+                                    LIMIT 1;
+                        """
+                        result = executeQuery(query)
                     else:
                         print("⚠️ 알 수 없는 admin 요청:", jsonData)
                         result = {"status": "error", "message": "Invalid request type"}
@@ -543,7 +561,7 @@ def handle_client(client_socket, addr):
                             "data": result
                         }
 
-                        # send_message_to_client("admin", json.dumps(adminSendMessage, ensure_ascii=False, default=str))
+                        send_message_to_client("admin", json.dumps(adminSendMessage, ensure_ascii=False, default=str))
 
                 elif category.startswith("flame"):
                     if message == "detected":                        
