@@ -105,12 +105,36 @@
 ![IMG_9657 (1)](https://github.com/user-attachments/assets/85c8c2e2-75e2-4a43-ae8e-26b423895af4)
 
 
+* 정기권이 없으면 안 열어준다.
+* OLED에 주차된 차의 수를 표시한다. 
+
+
 ### 만차
 ![IMG_9669 (1)](https://github.com/user-attachments/assets/669ec910-cd9c-47a8-9073-3a0467950287)
 
+* 만차일 시 OLED에 표시하고 열어주지 않는다.
+
 
 ### 1-2. 출구 
+![image](https://github.com/user-attachments/assets/e66fde67-9956-4479-a230-08d26778e664)
 
+
+
+### 1-3. 주차
+![20250227_194730_4 (1)](https://github.com/user-attachments/assets/38550fa6-4dce-4ff8-b0ab-c520eaa0045f)
+
+
+주차된 수에 따라 OLED가 바뀐다. 
+
+
+### 1-4. 화재 
+![image](https://github.com/user-attachments/assets/2da2be29-c99c-4761-a03b-9fd79385a012)
+
+
+자동으로 화재가 난 곳으로 카메라를 돌린다.
+
+
+***
 
 
 ## 2. GUI
@@ -124,8 +148,13 @@
 ![image](https://github.com/user-attachments/assets/c8f395d0-fe1d-4d14-a025-27e99a638458)
 
 
+어느정도 차가 찼는지에 따라 미니맵이 바뀐다.
+
 
 ![image](https://github.com/user-attachments/assets/471452fa-03bf-4e94-be7c-3c4667ca732d)
+
+
+주차된 공간에 마우스를 가져다대면 주차된 차량 정보를 확인 가능하다.
 
 
 
@@ -149,12 +178,19 @@
 
 
 ![image](https://github.com/user-attachments/assets/ec0b8652-af47-40d1-9a57-78ec0c2d1fcf)
+
+
+
+![fire_event_20250227_183053](https://github.com/user-attachments/assets/a9fb0a6d-a20d-4373-89e0-23ddbc60f3eb)
+
 자동 저장 기능 
 
 
 ### 2-7. 이벤트 기록
 ![image](https://github.com/user-attachments/assets/f6c2025b-c2bb-43d3-9a9e-3cbffeb7562e)
 
+
+***
 
 
 ## 3. User GUI 
@@ -175,5 +211,7 @@
 
 
 ### 3-1-3. 입출차 기록이 없는 경우
+
+
 마지막 기록으로 보여준다
 ![image](https://github.com/user-attachments/assets/92d7192f-42fa-4c8e-8b40-5656aeb44514)
