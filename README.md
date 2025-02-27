@@ -96,4 +96,36 @@
 # 3. 구현 결과 
 
 
+## 1. 하드웨어 
+
+
+## 1-1. 입구 
+
+
+![IMG_9657 (1)](https://github.com/user-attachments/assets/85c8c2e2-75e2-4a43-ae8e-26b423895af4)
+
+
+## 1-2. 출구 
+
+
+
+## 2. GUI
+
+### 2-1. 메인화면
+![image](https://github.com/user-attachments/assets/c8f395d0-fe1d-4d14-a025-27e99a638458)
+
+
+### 2-2. 회원정보 
+![image](https://github.com/user-attachments/assets/86a0e7a5-16d2-4676-b3f5-188718f5b335)
+
+
+
+### 2-3. 회원가입 
+![image](https://github.com/user-attachments/assets/45708cd9-54db-469e-9f36-a94c8caaa962)
+
+
+### 2-4.회원수정 
+![image](https://github.com/user-attachments/assets/892d46e5-c405-441a-a3e1-41690fb19d70)
+
+
 
