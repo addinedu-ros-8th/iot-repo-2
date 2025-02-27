@@ -116,6 +116,7 @@
 
 
 ### 1-2. 출구 
+
 ![image](https://github.com/user-attachments/assets/e66fde67-9956-4479-a230-08d26778e664)
 
 
