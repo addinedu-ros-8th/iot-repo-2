@@ -5,10 +5,12 @@ import warnings
 import cv2  # CameraThread에서 사용
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QThread, pyqtSignal, QDate
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView, QLineEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView, QLineEdit, QLabel
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5 import uic
 from PyQt5.QtNetwork import QTcpSocket
+from PyQt5.QtCore import QEvent
+
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -23,7 +25,7 @@ class SocketManager:
             cls._instance = super(SocketManager, cls).__new__(cls)
             cls._instance.socket = QTcpSocket()
             # 서버 IP와 포트 (예: "192.168.0.22", 6000)
-            cls._instance.socket.connectToHost("192.168.0.22", 5000)
+            cls._instance.socket.connectToHost("192.168.102.121", 5000)
             if not cls._instance.socket.waitForConnected(3000):
                 print(f"[SocketManager] Socket connection failed: {cls._instance.socket.errorString()}\n")
             else:
@@ -105,6 +107,8 @@ class CameraThread(QThread):
         super().__init__()
         self.stream_url = stream_url
         self.running = True
+        self.recording = False  # 녹화 여부
+        self.video_writer = None  # 비디오 저장 객체
 
     def run(self):
         cap = cv2.VideoCapture(self.stream_url)
@@ -125,6 +129,28 @@ class CameraThread(QThread):
 
     def stop(self):
         self.running = False
+
+# 화재 감지 녹화
+    def start_recording(self):
+        if not self.recording:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"cctv/fire_event_{timestamp}.avi"
+            cap = cv2.VideoCapture(self.stream_url)
+            width = int(cap.get(3))
+            height = int(cap.get(4))
+            self.video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*"XVID"), 20.0, (width, height))
+            self.recording = True
+            print(f"[CameraThread] 녹화 시작: {filename}")
+
+    def stop_recording(self):
+        if self.recording:
+            self.recording = False
+            if self.video_writer:
+                self.video_writer.release()
+                self.video_writer = None
+            print("[CameraThread] 녹화 종료")       
+
+
 
 # ------------------------------------------------------------------
 # adminLoginWindow: 관리자 로그인 창 (UI 파일 main/adminLogin.ui 필요)
@@ -153,16 +179,13 @@ class adminLoginWindow(QMainWindow):
             QMessageBox.warning(self, "로그인 실패", "ID 또는 비밀번호가 다릅니다.")
 
     def open_admin_window(self):
-        stream_url = "http://172.28.219.150:5001/feed1"
+        stream_url = "http://192.168.102.150:5000/feed2"
         self.admin_window = WindowClass(stream_url)
         self.admin_window.show()
         self.close()
 
     def handle_response(self, response):
-        if self.last_response == response:
-            print("[adminLoginWindow] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
+
         try:
             response_message = json.loads(response)
             if response_message.get("client", "") == "adminLoginWindow":
@@ -185,6 +208,12 @@ class WindowClass(QMainWindow, from_class):
         self.setupUi(self)
         self.pixmap = QPixmap()
         self.last_response = None
+
+        self.Startdate.setCalendarPopup(True)
+        self.Startdate.setDate(QDate.currentDate())
+        self.Enddate.setCalendarPopup(True)
+        self.Enddate.setDate(QDate.currentDate())
+
         # CCTV 제어
         self.camera_thread = CameraThread(stream_url)
         self.camera_thread.frame_update.connect(self.updateCamera)
@@ -193,6 +222,7 @@ class WindowClass(QMainWindow, from_class):
         # 버튼 연결
         self.UserInfobtn.clicked.connect(self.EnterUserInfo)
         self.btnSearch.clicked.connect(self.selectInOutHistory)
+        self.eventbtn.clicked.connect(self.EnterEventInfo)
         
         # 공유 소켓 사용
         self.network_manager = SocketManager()
@@ -213,8 +243,14 @@ class WindowClass(QMainWindow, from_class):
         self.displayLed1.setPixmap(self.vacantstate)
         self.displayLed2.setPixmap(self.vacantstate)
         self.displayLed3.setPixmap(self.vacantstate)
-        self.dispalyLed4.setPixmap(self.vacantstate)
+        self.displayLed4.setPixmap(self.vacantstate)
         self.getParkingstate()
+
+        self.Edit1.setVisible(False)
+        self.Edit2.setVisible(False)
+        self.Edit3.setVisible(False)
+        self.Edit4.setVisible(False)
+
 
     def Start(self):
         user_data = {
@@ -231,10 +267,9 @@ class WindowClass(QMainWindow, from_class):
             "park_id": 1,
             "type": "selectInOutHistory",
             "user_name": self.editName.text(),
-            "car_number": self.editCarnum.text(),
-            "event_category": self.eventcombo.currentText(),
-            "pass_start_date": self.dateStart.date().toString("yyyy-MM-dd-HH:mm:ss"),
-            "pass_expiration_date": self.dateEnd.date().toString("yyyy-MM-dd-HH:mm:ss"),
+            "indatetime_start ": self.Startdate.date().toString("yyyy-MM-dd"),
+            "indatetime_end": self.Enddate.date().toString("yyyy-MM-dd"),
+            "inout_car_number": self.editCarnum.text(),
         }
         print(f"[WindowClass] selectInOutHistory() 요청 전송: {user_data}\n")
         self.network_manager.send_data(user_data)
@@ -245,33 +280,41 @@ class WindowClass(QMainWindow, from_class):
         self.network_manager.send_data(user_data)
 
     def handle_response(self, response):
-        if self.last_response == response:
-            print("[WindowClass] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
         try:
-            response_message = json.loads(response)
+            response_message = json.loads(response)  # response가 문자열일 경우 JSON 변환
             if response_message.get("client", "") == "WindowClass":
-                response_data = json.loads(response_message.get("data", "{}"))
+                response_data = response_message.get("data", [])
 
-                if response_data is not None:
-                    print(f"[WindowClass] 서버 응답: {response}\n")                
-                    # 미니맵 데이터인지 테이블 데이터인지 분기
-                    if isinstance(response_data, dict) and all(key in response_data for key in ["space1", "space2", "space3", "space4"]):
-                        self.minimapdisplay(response_data)
-                    else:
-                        self.visibleInOutHistory(response_data)
-            # else:
-            #     QMessageBox.information(self, "응답", f"서버 메시지: {response_message.get('message', '응답 없음')}")
+                response_type = response_message.get("type", "")
+                if response_type == "firedetect":
+                    print(f"[WindowClass] 🔥 화재 감지! 감지 위치: {response_data}")
+                    self.fireEvent(response_data)  # 팝업 띄우기 & 위치 전달
+                    #녹화시작
+                    self.camera_thread.start_recording()
+                    return  # 화재 감지는 중복 체크 없이 여기서 종료
+                if response_type == "selectSpaceState": 
+                    self.minipopup(response_data)
+                    if isinstance(response_data, list):  # 서버에서 리스트로 보내는 경우
+                        # 리스트 데이터를 딕셔너리 형태로 변환하여 minimapdisplay 호출
+                        minimap_data = {item["space_name"]: item["state"] for item in response_data}
+                        print(f"[WindowClass] 변환된 미니맵 데이터: {minimap_data}\n")
+                        self.minimapdisplay(minimap_data)  # 변환한 데이터를 minimapdisplay()에 전달
+                else:
+                    self.visibleInOutHistory(response_data)
+        
+        except json.JSONDecodeError:
+            print(f"[WindowClass] JSON 파싱 오류: {response}")
+        
         except Exception as e:
             print(f"[WindowClass] 예외 발생: {e}")
+
 
     def minimapdisplay(self, response_data):
         led_mapping = {
             "space1": self.displayLed1,
             "space2": self.displayLed2,
             "space3": self.displayLed3,
-            "space4": self.dispalyLed4
+            "space4": self.displayLed4
         }
         if not isinstance(response_data, dict):
             print(f"[WindowClass] 응답 형식 오류: {response_data}\n")
@@ -279,25 +322,106 @@ class WindowClass(QMainWindow, from_class):
         for space, state in response_data.items():
             led_label = led_mapping.get(space)
             if led_label:
-                if state == 1:
+                if state == 0:
                     led_label.setPixmap(self.parkingstate)
+                    # #마우스 이벤트
+                    led_label.installEventFilter(self)
+
                 else:
                     led_label.setPixmap(self.vacantstate)
 
+                    #마우스 이벤트 
+                    led_label.mouseMoveEvent = None
+                    self.hideCarInfo(None, space)
+                    led_label.removeEventFilter(self)
+    
+    #팝업 관련 
+
+    def minipopup(self, response_data):
+        """ 차량 정보를 latest_state에 저장 """
+        self.latest_state = {item["space_name"]: item for item in response_data}  # 전체 정보 저장
+        # print( "[minipopup data] 미니팝업에 저장된 데이터 : ",  self.latest_state)        
+    
+    def eventFilter(self, obj, event):
+        """ 마우스 hover 이벤트 처리 """
+        led_mapping = {
+            "space1": self.displayLed1,
+            "space2": self.displayLed2,
+            "space3": self.displayLed3,
+            "space4": self.displayLed4
+        }
+        
+        space = next((key for key, val in led_mapping.items() if val == obj), None)
+        
+        if space:
+            if event.type() == QEvent.Enter:  # 마우스가 올라왔을 때
+                self.showCarInfo(event, space)
+            elif event.type() == QEvent.Leave:  # 마우스가 벗어났을 때
+                self.hideCarInfo(event, space)
+                
+        return super().eventFilter(obj, event)   
+
+                    
+    def showCarInfo(self, event, space):
+        """ 마우스를 올렸을 때 차량 정보 표시 """
+        edit_mapping = {
+            "space1": self.Edit1,
+            "space2": self.Edit2,
+            "space3": self.Edit3,
+            "space4": self.Edit4
+        }
+        
+        if space in edit_mapping and space in self.latest_state:
+            edit_widget = edit_mapping[space]
+            car_info = self.latest_state[space]  
+            print(f"[DEBUG] space={space}, car_info={car_info}")
+            
+            if car_info:
+                edit_widget.setText(f"{car_info['user_name']} / {car_info['car_number']}")
+                edit_widget.setVisible(True)
+            else:
+                print(f"[ERROR] 차량 정보 없음: space={space}")
+
+    def hideCarInfo(self, event, space):
+
+        edit_mapping = {
+            "space1": self.Edit1,
+            "space2": self.Edit2,
+            "space3": self.Edit3,
+            "space4": self.Edit4
+        }
+        
+        if space in edit_mapping:
+            edit_widget = edit_mapping[space]
+            edit_widget.setVisible(False)  # 숨김 처리
+                    
     def visibleInOutHistory(self, response_data):
         if not isinstance(response_data, list) or not response_data:
+            print("[WindowClass] 유효한 입출차 데이터가 없음.")
             self.InoutTable.setRowCount(0)
             return
-        columns = list(response_data[0].keys())
+            
+        columns = ["user_name", "indatetime", "outdatetime", "inout_car_number", "inout_car_uuid"]
+        column_headers = ["이름", "입차 시간", "출차 시간", "차 번호", "차 UUID"]
+        
         self.InoutTable.setRowCount(len(response_data))
         self.InoutTable.setColumnCount(len(columns))
-        self.InoutTable.setHorizontalHeaderLabels(columns)
+        self.InoutTable.setHorizontalHeaderLabels(column_headers)
         for row, item in enumerate(response_data):
             for col, key in enumerate(columns):
-                self.InoutTable.setItem(row, col, QTableWidgetItem(str(item.get(key, ""))))
+                value = item.get(key, "없음")  # None 값 대비 기본값 설정
+                self.InoutTable.setItem(row, col, QTableWidgetItem(str(value)))
+        
         self.InoutTable.resizeColumnsToContents()
+        
+        self.InoutTable.setColumnWidth(0, 50)   # 이름
+        self.InoutTable.setColumnWidth(1, 180)  # 입차 시간
+        self.InoutTable.setColumnWidth(2, 180)  # 출차 시간
+        self.InoutTable.setColumnWidth(3, 120)  # 차 번호
+        self.InoutTable.setColumnWidth(4, 150)  # 차 UUID
+        
         self.InoutTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
+        
     def EnterUserInfo(self):
         print("[WindowClass] EnterUserInfo() 호출\n")
         self.userinfo_window = UserInfoWindow()
@@ -311,18 +435,37 @@ class WindowClass(QMainWindow, from_class):
         print("[WindowClass] 창 종료. 카메라 스레드 중지.\n")
         self.camera_thread.stop()
         event.accept()
+    
+        # 이벤트 기록 창 열기 
+    def EnterEventInfo(self): 
+        self.event_window = EventWindow()
+        self.event_window.show()
+
+    def fireEvent(self, fire_location):
+        print(f"[WindowClass] 화재 감지! firepopup 창 띄우기 (위치: {fire_location})") 
+        self.firepopup_window = firepopup(fire_location, self)  # 위치 전달
+        self.firepopup_window.confirmbtn.clicked.connect(self.stopRecording)  # 확인 버튼 연결
+        self.firepopup_window.show()
+    
+    def stopRecording(self):
+        print("[WindowClass] 화재 이벤트 종료 - 녹화 중지")
+        self.camera_thread.stop_recording()
+
 
 # ------------------------------------------------------------------
 # UserInfoWindow: 회원 정보 창 (UI 파일 main/UserInfo.ui 필요)
 # ------------------------------------------------------------------
+
 class UserInfoWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("main/UserInfo.ui", self)
         self.network_manager = SocketManager()
         self.network_manager.get_receiver().data_received.connect(self.handle_response)
+
         self.SignUserInfobtn.clicked.connect(self.openSignUserInfo)
         self.updateUserInfobtn.clicked.connect(self.OpenupdateUserInfo)
+
         self.searchbtn.clicked.connect(self.selectUserInfo)
         self.conformbtn.clicked.connect(self.close)
         self.last_response = None
@@ -349,10 +492,6 @@ class UserInfoWindow(QMainWindow):
         self.updateUserInfoWindow.show()
 
     def handle_response(self, response):
-        if self.last_response == response:
-            print("[UserInfoWindow] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
 
         try:
             response_message = json.loads(response)
@@ -401,6 +540,8 @@ class UserInfoWindow(QMainWindow):
         #     print("------------------------------------------------------")
 
         # print("-----------------------------------------------------------")
+
+
 # ------------------------------------------------------------------
 # SignUserInfoWindow: 회원가입 창 (UI 파일 main/SignUserInfo.ui 필요)
 # ------------------------------------------------------------------
@@ -437,10 +578,6 @@ class SignUserInfoWindow(QMainWindow):
         self.btnConfirm.clicked.connect(self.close)
 
     def handle_response(self, response):
-        if self.last_response == response:
-            print("[SignUserInfoWindow] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
         try:
             response_message = json.loads(response)
             if response_message.get("client", "") == "SignUserInfoWindow":
@@ -519,10 +656,6 @@ class updateUserInfoWindow(QMainWindow):
 
     def handle_response(self, response):
         print(f"[updateUserInfoWindow] Server Response: {response}\n")
-        if self.last_response == response:
-            print("[updateUserInfoWindow] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
         try:
             response_message = json.loads(response)
             if response_message.get("client", "") != "updateUserInfoWindow":
@@ -539,10 +672,6 @@ class updateUserInfoWindow(QMainWindow):
             return
    
     def handle_response(self, response):
-        if self.last_response == response:
-            print("[updateUserInfoWindow] 중복 응답 감지됨. 무시합니다.\n")
-            return
-        self.last_response = response
         try:
             response_message = json.loads(response)
             if response_message.get("client", "") == "updateUserInfoWindow":                
@@ -614,13 +743,112 @@ class updateUserInfoWindow(QMainWindow):
                 QMessageBox.warning(self, "오류", "잘못된 응답 형식입니다.")
         else:
             QMessageBox.warning(self, "오류", "서버 응답이 올바르지 않습니다.")
+# ------------------------------------------------------------------
+# eventWindow: 이벤트 창 (UI 파일 main/EventInfo.ui 필요)
+# ------------------------------------------------------------------
+class EventWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi("main/EventInfo.ui", self)
+        self.searchbtn.clicked.connect(self.selectEvent)
+        self.conformbtn.clicked.connect(self.close)
+
+        self.network_manager = SocketManager()
+        self.network_manager.get_receiver().data_received.connect(self.handle_response)
+        self.last_response = None
+
+        # 콤보박스
+        self.comboBox.clear()
+        self.comboBox.addItems(["화재"])
+        category_mapping = {
+            "화재": "flame",
+        }
+        self.event_category = self.comboBox.currentText()
+        self.event_category = category_mapping.get(self.event_category, self.event_category)  # 변환된 값 사용
+        
+        # 캘린더 
+        self.EditStart.setCalendarPopup(True)
+        self.EditStart.setDate(QDate.currentDate())
+        self.EditEnd.setCalendarPopup(True)
+        self.EditEnd.setDate(QDate.currentDate())
+
+    def selectEvent(self):
+        user_data = {
+            "client": "eventWindow",  # 식별자 추가
+            "park_id": 1,
+            "type": "selectEvent",
+            "event_category": self.event_category,
+            "date_start": self.EditStart.date().toString("yyyy-MM-dd"),
+            "date_end": self.EditEnd.date().toString("yyyy-MM-dd")
+        }
+        
+        print(f"[updateEventWindow] selectEventInfo() 요청 전송: {user_data}\n")
+        self.network_manager.send_data(user_data)
+        
+    def handle_response(self, response):
+        try:
+            response_message = json.loads(response)
+        
+        except json.JSONDecodeError as e:
+            print(f"[UserInfoWindow] JSON 디코딩 오류 발생: {e}")
+            return
+        
+        try:
+            if response_message.get("client") == "eventWindow":
+                response_data = response_message.get("data", [])  
+                print(f"[EventInfoWindow] 서버 응답: {response_data}\n")
+                self.visibleEventInfo(response_data)
+        except Exception as e:
+            print(f"[EventWindow] 예외 발생: {e}")
+    
+    def visibleEventInfo(self, response_data):
+        required_keys = ["event_id", "space_id", "event_start_time", "event_category", "event_info"]
+        column_names = ["이벤트 ID", "공간 ID", "시작 시간", "이벤트 유형", "이벤트 정보"]
+        
+        filtered_data = [{key: str(item.get(key, "")) for key in required_keys} for item in response_data]
+        self.eventTable.setRowCount(len(filtered_data))
+        self.eventTable.setColumnCount(len(column_names))
+        self.eventTable.setHorizontalHeaderLabels(column_names)
+        
+        for row, item in enumerate(filtered_data):
+            for col, key in enumerate(required_keys):
+                self.eventTable.setItem(row, col, QTableWidgetItem(item[key]))
+                
+        self.eventTable.resizeColumnsToContents()
+        self.eventTable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        
+        print("\n[EventWindow] 데이터 테이블 업데이트 완료")
+
+# ------------------------------------------------------------------
+# Firepopup: 화재이벤트팝업 (UI 파일 main/fire.ui 필요)
+# ------------------------------------------------------------------
+class firepopup(QMainWindow):
+    def __init__(self, response_data, main_window):
+        super().__init__()
+        uic.loadUi("main/fire.ui", self)  # UI 파일 로드
+        self.setWindowTitle("🔥 화재 경보")
+        self.main_window = main_window
+
+        # lineEdit 찾기
+        self.label = self.findChild(QLabel, "label")
+        if self.label:  
+            self.label.setText(str(response_data))  # 받은 데이터 표시
+
+        # 확인 버튼 클릭 시 화재 녹화 중지 이벤트 발생 
+        #원래는 self.close만 줬다.
+        self.confirmbtn.clicked.connect(self.CloseFireEvent)
+
+    def CloseFireEvent(self):
+        self.main_window.stopRecording()
+        self.close()
+
 
 
 # ------------------------------------------------------------------
 # 메인 실행부
 # ------------------------------------------------------------------
 if __name__ == "__main__":
-    stream_url = "http://172.28.219.150:5001/feed1"
+    stream_url = "http://192.168.102.150:5000/feed2"
     app = QApplication(sys.argv)
     myWindows = adminLoginWindow()
     myWindows.show()

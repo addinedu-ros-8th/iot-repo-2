@@ -40,17 +40,14 @@
      <string>확인</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLineEdit" name="lineEdit">
     <property name="geometry">
      <rect>
-      <x>150</x>
+      <x>140</x>
       <y>110</y>
-      <width>281</width>
+      <width>181</width>
       <height>51</height>
      </rect>
-    </property>
-    <property name="text">
-     <string/>
     </property>
    </widget>
   </widget>
