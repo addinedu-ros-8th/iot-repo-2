@@ -99,7 +99,7 @@ class NetworkThread(QThread):
 
 # ------------------------------------------------------------------
 # CameraThread: CCTV 스트림을 읽어 QImage로 변환하여 emit (cv2 필요)
-# ------------------------------------------------------------------
+# ------------------------------------------------------------------     
 class CameraThread(QThread):
     frame_update = pyqtSignal(QImage)
 
@@ -107,49 +107,52 @@ class CameraThread(QThread):
         super().__init__()
         self.stream_url = stream_url
         self.running = True
-        self.recording = False  # 녹화 여부
-        self.video_writer = None  # 비디오 저장 객체
+        self.recording = False
+        self.cap = None
+        self.video_writer = None
 
     def run(self):
-        cap = cv2.VideoCapture(self.stream_url)
-        if not cap.isOpened():
-            print("[CameraThread] Failed to connect to camera stream\n")
+        self.cap = cv2.VideoCapture(self.stream_url)
+        if not self.cap.isOpened():
+            print("[CameraThread] 카메라 스트림 연결 실패\n")
             return
+
         while self.running:
-            ret, frame = cap.read()
+            ret, frame = self.cap.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, ch = frame.shape
                 bytes_per_line = ch * w
                 qimage = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
                 self.frame_update.emit(qimage)
+
+                if self.recording and self.video_writer:
+                    self.video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             else:
-                print("[CameraThread] Failed to read frame\n")
-        cap.release()
+                print("[CameraThread] 프레임 읽기 실패\n")
+                break
 
-    def stop(self):
-        self.running = False
+        self.cap.release()
 
-# 화재 감지 녹화
     def start_recording(self):
-        if not self.recording:
+        """화재 감지 시 녹화 시작"""
+        if not self.recording and self.cap is not None:
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             filename = f"cctv/fire_event_{timestamp}.avi"
-            cap = cv2.VideoCapture(self.stream_url)
-            width = int(cap.get(3))
-            height = int(cap.get(4))
+            width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             self.video_writer = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*"XVID"), 20.0, (width, height))
             self.recording = True
             print(f"[CameraThread] 녹화 시작: {filename}")
 
     def stop_recording(self):
+        """화재 종료 시 녹화 중지"""
         if self.recording:
             self.recording = False
             if self.video_writer:
                 self.video_writer.release()
                 self.video_writer = None
-            print("[CameraThread] 녹화 종료")       
-
+            print("[CameraThread] 녹화 중지")
 
 
 # ------------------------------------------------------------------
@@ -289,9 +292,9 @@ class WindowClass(QMainWindow, from_class):
                 if response_type == "firedetect":
                     print(f"[WindowClass] 🔥 화재 감지! 감지 위치: {response_data}")
                     self.fireEvent(response_data)  # 팝업 띄우기 & 위치 전달
-                    #녹화시작
-                    self.camera_thread.start_recording()
-                    return  # 화재 감지는 중복 체크 없이 여기서 종료
+                    self.camera_thread.start_recording()  # 🔴 녹화 시작
+                    return  # 중복 체크 없이 종료
+
                 if response_type == "selectSpaceState": 
                     self.minipopup(response_data)
                     if isinstance(response_data, list):  # 서버에서 리스트로 보내는 경우
@@ -533,15 +536,6 @@ class UserInfoWindow(QMainWindow):
 
         print("\n[UserInfoWindow] 전송 완료")
 
-        
-        # for item in response_data:
-        #     print(f"이름: {item['user_name']}, 차량번호: {item['car_number']}")
-        #     print("\n")
-        #     print("------------------------------------------------------")
-
-        # print("-----------------------------------------------------------")
-
-
 # ------------------------------------------------------------------
 # SignUserInfoWindow: 회원가입 창 (UI 파일 main/SignUserInfo.ui 필요)
 # ------------------------------------------------------------------
@@ -595,11 +589,11 @@ class SignUserInfoWindow(QMainWindow):
                     message = response_data.get("message", "응답 없음")
                     
                     if status == "success":
-                        QMessageBox.information(self, "성공", f"✅ 성공: {message}")
+                        QMessageBox.information(self, "성공", f" 성공: {message}")
                     elif status == "fail":
-                        QMessageBox.warning(self, "실패", f"❌ 실패: {message}")
+                        QMessageBox.warning(self, "실패", f" 실패: {message}")
                     else:
-                        QMessageBox.information(self, "알림", f"ℹ️ 응답 메시지: {message}")
+                        QMessageBox.information(self, "알림", f"응답 메시지: {message}")
 
         except Exception as e:
             print(f"[SignUserInfoWindow] 예외 발생: {e}")
@@ -825,20 +819,20 @@ class EventWindow(QMainWindow):
 class firepopup(QMainWindow):
     def __init__(self, response_data, main_window):
         super().__init__()
-        uic.loadUi("main/fire.ui", self)  # UI 파일 로드
-        self.setWindowTitle("🔥 화재 경보")
+        uic.loadUi("main/fire.ui", self)
+        self.setWindowTitle("화재 경보")
         self.main_window = main_window
 
-        # lineEdit 찾기
+        # 감지된 위치를 label에 표시
         self.label = self.findChild(QLabel, "label")
-        if self.label:  
-            self.label.setText(str(response_data))  # 받은 데이터 표시
+        if self.label:
+            self.label.setText(str(response_data))
 
-        # 확인 버튼 클릭 시 화재 녹화 중지 이벤트 발생 
-        #원래는 self.close만 줬다.
+        # 확인 버튼 클릭 시 녹화 중지 & 창 닫기
         self.confirmbtn.clicked.connect(self.CloseFireEvent)
 
     def CloseFireEvent(self):
+        print("[firepopup] 화재 이벤트 종료 - 녹화 중지")
         self.main_window.stopRecording()
         self.close()
 
