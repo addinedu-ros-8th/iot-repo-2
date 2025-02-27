@@ -105,6 +105,14 @@
 ![IMG_9657 (1)](https://github.com/user-attachments/assets/85c8c2e2-75e2-4a43-ae8e-26b423895af4)
 
 
+
+### 만차
+![IMG_9669 (1)](https://github.com/user-attachments/assets/669ec910-cd9c-47a8-9073-3a0467950287)
+
+
+
+
+
 ## 1-2. 출구 
 
 
@@ -113,6 +121,10 @@
 
 ### 2-1. 메인화면
 ![image](https://github.com/user-attachments/assets/c8f395d0-fe1d-4d14-a025-27e99a638458)
+
+
+![image](https://github.com/user-attachments/assets/471452fa-03bf-4e94-be7c-3c4667ca732d)
+
 
 
 ### 2-2. 회원정보 
