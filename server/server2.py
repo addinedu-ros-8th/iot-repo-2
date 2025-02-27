@@ -9,7 +9,7 @@ import easyocr
 import cv2
 from datetime import date, datetime
 import re
-
+import traceback
 
 # 📌 OCR 객체 생성 (한국어 & 영어 지원)
 reader = easyocr.Reader(['ko', 'en'])
@@ -51,7 +51,7 @@ def tcp_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # 🚀 빠른 재시작 가능
     server_socket.bind((SERVER_IP, SERVER_PORT))
-    server_socket.listen(10)
+    server_socket.listen(20)
     print(f"🚀 TCP 서버 실행 중... {SERVER_IP}:{SERVER_PORT}")
 
     while True:
@@ -137,11 +137,15 @@ def handle_client(client_socket, addr):
 
             if data.startswith("in/") :
                 
-                point, uuid = data.split("/")
+                point, message = data.split("/")
                 
                 client_sockets[point] = client_socket
 
-                uuid = convert_rfid_format(uuid)
+                if(message.startswith("PING")):
+                    send_message_to_client(point, "PONG")
+                    return
+                
+                uuid = convert_rfid_format(message)
                 print("in " + uuid)
 
                 ocr_result = perform_ocr()
@@ -156,14 +160,31 @@ def handle_client(client_socket, addr):
                     WHERE 
                         car_uuid = '{uuid}' AND 
                         car_number = '{ocr_result}' AND
-                        pass_expiration_date >= now()
+                        pass_expiration_date >= CURDATE();
                 """
                 result = executeQuery(query)
 
                 print(result)
 
+                select_sql = """
+                    SELECT COALESCE(SUM(s.state), 0) AS available
+                    FROM parking_smoothly.space_state AS s
+                    JOIN (
+                        SELECT space_name, MAX(time) AS max_date
+                        FROM parking_smoothly.space_state
+                        GROUP BY space_name
+                    ) AS t
+                    ON s.space_name = t.space_name       
+                    AND s.time = t.max_date                                 
+                    WHERE s.state = 1;
+                """
+
+                selectResult = executeQuery(select_sql)
+
+                car_count = selectResult[0]['available']
+
                 if(result and car_count > 0):
-                    # send_message_to_client(point, str(car_count) + "PASS")
+                    send_message_to_client(point, str(car_count) + "PASS")
 
                     # 차량 출입 기록
                     query = f"""
@@ -178,8 +199,8 @@ def handle_client(client_socket, addr):
                             """
                     result = executeQuery(query)
 
-                # else:
-                    # send_message_to_client(point, str(car_count) + "FAIL")
+                else:
+                    send_message_to_client(point, str(car_count) + "FAIL")
 
             elif data.startswith("out/"):
                 point, message = data.split("/")
@@ -234,14 +255,14 @@ def handle_client(client_socket, addr):
                             """
                         result = executeQuery(query)   
 
-                        remaining_days = int(result[0]["remaining_days"])
+                        # remaining_days 값이 없을 경우 대비 (예: NULL 반환)
+                        remaining_days = int(result[0]["remaining_days"]) if result and result[0]["remaining_days"] is not None else 0
 
-                        if(remaining_days < 10):
-                            remaining_days = "00" + str(remaining_days)
-                        elif(remaining_days < 100):
-                            remaining_days = "0" + str(remaining_days)
+                        # 3자리 문자열로 변환 (앞에 0을 붙이기 위해 zfill 사용)
+                        remaining_days_str = str(remaining_days).zfill(3)
 
-                        send_message_to_client(point, remaining_days + "PASS")
+                        # 수정된 부분: 정수 + 문자열 오류 해결
+                        send_message_to_client(point, remaining_days_str + "PASS")
                     else:
                         send_message_to_client(point, "000FAIL")
 
@@ -259,6 +280,7 @@ def handle_client(client_socket, addr):
                     # 🚗 출입문 제어 요청
                     if request_type == "INOPEN":
                         send_message_to_client("in", str(car_count) + "PASS")
+
                     elif request_type == "OUTOPEN":
                         send_message_to_client("out", str(car_count) + "PASS")
 
@@ -277,7 +299,7 @@ def handle_client(client_socket, addr):
 
                     # 🔍 사용자 정보 조회
                     elif request_type == "selectUserInfo":
-                        query = "SELECT park_id, user_id, user_name, car_number, car_uuid, useㅣr_phone, car_category, pass_start_date, pass_expiration_date FROM parking_smoothly.user_info"
+                        query = "SELECT park_id, user_id, user_name, car_number, car_uuid, user_phone, car_category, pass_start_date, pass_expiration_date FROM parking_smoothly.user_info"
                         conditions = []
 
                         if "user_id" in jsonData and jsonData.get("user_id", "").strip():
@@ -298,6 +320,7 @@ def handle_client(client_socket, addr):
                         if conditions:
                             query += " WHERE " + " AND ".join(conditions)
                         query += ";"
+
                         result = executeQuery(query)
 
                     # 📌 주차 공간 상태 조회
@@ -327,43 +350,71 @@ def handle_client(client_socket, addr):
 
                     # 📜 주차 이벤트 조회
                     elif request_type == "selectEvent":
-                        query = "SELECT * FROM parking_smoothly.parking_event_history;"
-                        result = executeQuery(query)
-
-                    # 🚗 입출차 기록 조회
-                    elif request_type == "selectInOutHistory":
-                        query = """
-                                    SELECT 
-                                        inout_id,
-                                        user_id,
-                                        indatetime,
-                                        in_picture,
-                                        outdatetime,
-                                        out_picture,
-                                        inout_car_number,
-                                        inout_car_uuid 
-                                    FROM 
-                                        parking_smoothly.car_inout_history
-                                """
+                        query = "SELECT * FROM parking_smoothly.parking_event_history"
+                        
                         conditions = []
 
-                        if "inout_id" in jsonData and jsonData.get("inout_id", "").strip():
-                            conditions.append(f"inout_id = {jsonData['inout_id']}")
-                        if "user_id" in jsonData and jsonData.get("user_id", "").strip():
-                            conditions.append(f"user_id = {jsonData['user_id']}")
-                        if "inout_car_number" in jsonData and jsonData.get("inout_car_number", "").strip():
-                            conditions.append(f"inout_car_number = '{jsonData['inout_car_number']}'")
-                        if "inout_car_uuid" in jsonData and jsonData.get("inout_car_uuid", "").strip():
-                            conditions.append(f"inout_car_uuid = '{jsonData['inout_car_uuid']}'")
-                        if "indatetime_start" in jsonData and "indatetime_end" in jsonData and jsonData.get("indatetime_start", "").strip() and jsonData.get("indatetime_end", "").strip():
-                            conditions.append(f"indatetime BETWEEN '{jsonData['indatetime_start']}' AND '{jsonData['indatetime_end']}'")
-                        if "outdatetime_start" in jsonData and "outdatetime_end" in jsonData and jsonData.get("outdatetime_start", "").strip() and jsonData.get("outdatetime_end", "").strip():
-                            conditions.append(f"outdatetime BETWEEN '{jsonData['outdatetime_start']}' AND '{jsonData['outdatetime_end']}'")
+                        if "date_start" in jsonData and "date_end" in jsonData and jsonData.get("date_start", "").strip() and jsonData.get("date_end", "").strip():
+                            conditions.append(f"(event_start_time BETWEEN '{jsonData['date_start']} 00:00:00' AND '{jsonData['date_end']} 23:59:59')")
+                        if "event_category" in jsonData and jsonData.get("event_category", "").strip():
+                            conditions.append(f"event_category = '{jsonData['event_category']}'")
 
                         if conditions:
                             query += " WHERE " + " AND ".join(conditions)
                         query += ";"
+
                         result = executeQuery(query)
+                    # 🚗 입출차 기록 조회
+                    elif request_type == "selectInOutHistory":
+                        query = """
+                            SELECT 
+                                h.inout_id,
+                                h.user_id,
+                                i.user_name,
+                                h.indatetime,
+                                h.in_picture,
+                                h.outdatetime,
+                                h.out_picture,
+                                h.inout_car_number,
+                                h.inout_car_uuid
+                            FROM 
+                                parking_smoothly.car_inout_history h
+                            LEFT JOIN 
+                                parking_smoothly.user_info i ON h.user_id = i.user_id
+                            WHERE 1=1
+                        """
+                        
+                        conditions = []
+
+                        if "inout_id" in jsonData and jsonData.get("inout_id", "").strip():
+                            conditions.append(f"h.inout_id = {jsonData['inout_id']}")
+
+                        if "user_name" in jsonData and jsonData.get("user_name", "").strip():
+                            conditions.append(f"i.user_name = '{jsonData['user_name']}'")
+
+                        if "inout_car_number" in jsonData and jsonData.get("inout_car_number", "").strip():
+                            conditions.append(f"h.inout_car_number = '{jsonData['inout_car_number']}'")
+
+                        if "inout_car_uuid" in jsonData and jsonData.get("inout_car_uuid", "").strip():
+                            conditions.append(f"h.inout_car_uuid = '{jsonData['inout_car_uuid']}'")
+
+                        if "indatetime_start" in jsonData and "indatetime_end" in jsonData:
+                            start_date = jsonData.get("indatetime_start", "").strip()
+                            end_date = jsonData.get("indatetime_end", "").strip()
+                            if start_date and end_date:
+                                conditions.append(f"h.indatetime BETWEEN '{start_date}' AND '{end_date}'")
+
+                        if "park_id" in jsonData and jsonData.get("park_id"):
+                            conditions.append(f"h.park_id = {jsonData['park_id']}")
+
+                        if conditions:
+                            query += " AND " + " AND ".join(conditions)
+                        
+                        query += ";"
+
+                        # SQL 실행
+                        result = executeQuery(query)
+
 
                     # 🏓 PING 요청 처리
                     elif request_type == "ping":
@@ -375,7 +426,7 @@ def handle_client(client_socket, addr):
                         result = {"status": "error", "message": "Invalid request type"}
 
                 except json.JSONDecodeError:
-                    print("❌ JSON 파싱 오류:", data)
+                    print("❌ JSON 파싱 오류:", data)                    
                     result = {"status": "error", "message": "Invalid JSON format"}
 
                 except Exception as e:
@@ -429,9 +480,9 @@ def handle_client(client_socket, addr):
 
                     if state is not None:
                         # 해당 주차공간(DB의 space_state 테이블에서 space_name과 일치)을 업데이트
-                        table_name = "parking_smoothly.space_state"
+                        
                         sql = f"""
-                                INSERT INTO {table_name} (
+                                INSERT INTO parking_smoothly.space_state (
                                             park_id,
                                             user_id,
                                             space_name,
@@ -472,7 +523,7 @@ def handle_client(client_socket, addr):
                         elif car_count < 0:
                             car_count = 0
                                                 
-                        # send_message_to_client("in", str(car_count) + "COUNT")
+                        send_message_to_client("in", str(car_count) + "COUNT")
 
                         query = """
                             SELECT s.user_id, s.space_name, s.time AS max_date, s.state, u.user_name, u.car_number
@@ -492,11 +543,10 @@ def handle_client(client_socket, addr):
                             "data": result
                         }
 
-                        send_message_to_client("admin", json.dumps(adminSendMessage, ensure_ascii=False, default=str))
+                        # send_message_to_client("admin", json.dumps(adminSendMessage, ensure_ascii=False, default=str))
 
                 elif category.startswith("flame"):
-                    if message == "detected":
-                        print("fire !!!!!!!!!!!!!!!!")
+                    if message == "detected":                        
                         table_name = "parking_smoothly.space_state"
                         query = f"""
                                     SELECT 
@@ -519,8 +569,8 @@ def handle_client(client_socket, addr):
                                             event_info
                                     ) VALUES (
                                             '{space_id}',
-                                            'space{category[5] } flame',
-                                            '{message}'
+                                            'flame',
+                                            'space{category[5]}'
                                         );
                                 """
                         resultMessage = executeQuery(query)
@@ -586,8 +636,8 @@ def send_message_to_client(point, message, timeout=5):
             if(point == "admin") :
                 return
 
-            # PONG, COUNT 메시지 응답을 기다리지 않음
-            if any(keyword in message for keyword in ["PONG","COUNT"]) :
+            # PONG 메시지 응답을 기다리지 않음
+            if any(keyword in message for keyword in ["PONG"]) :
                 return
 
             # 응답을 기다림
