@@ -153,6 +153,9 @@ class CameraThread(QThread):
                 self.video_writer.release()
                 self.video_writer = None
             print("[CameraThread] 녹화 중지")
+    
+    def stop(self):  # stop 메서드 추가
+        self.running = False
 
 
 # ------------------------------------------------------------------
@@ -182,7 +185,7 @@ class adminLoginWindow(QMainWindow):
             QMessageBox.warning(self, "로그인 실패", "ID 또는 비밀번호가 다릅니다.")
 
     def open_admin_window(self):
-        stream_url = "http://192.168.102.150:5000/feed2"
+        stream_url = "http://192.168.102.150:5000/feed1"
         self.admin_window = WindowClass(stream_url)
         self.admin_window.show()
         self.close()
@@ -377,7 +380,7 @@ class WindowClass(QMainWindow, from_class):
         if space in edit_mapping and space in self.latest_state:
             edit_widget = edit_mapping[space]
             car_info = self.latest_state[space]  
-            print(f"[DEBUG] space={space}, car_info={car_info}")
+            # print(f"[DEBUG] space={space}, car_info={car_info}")
             
             if car_info:
                 edit_widget.setText(f"{car_info['user_name']} / {car_info['car_number']}")
@@ -842,7 +845,7 @@ class firepopup(QMainWindow):
 # 메인 실행부
 # ------------------------------------------------------------------
 if __name__ == "__main__":
-    stream_url = "http://192.168.102.150:5000/feed2"
+    stream_url = "http://192.168.102.150:5000/feed1"
     app = QApplication(sys.argv)
     myWindows = adminLoginWindow()
     myWindows.show()

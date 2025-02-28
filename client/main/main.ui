@@ -163,53 +163,53 @@
    <widget class="QLabel" name="displayLed1">
     <property name="geometry">
      <rect>
-      <x>110</x>
-      <y>130</y>
+      <x>290</x>
+      <y>260</y>
       <width>71</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>1</string>
     </property>
    </widget>
    <widget class="QLabel" name="displayLed3">
     <property name="geometry">
      <rect>
-      <x>110</x>
-      <y>250</y>
+      <x>120</x>
+      <y>140</y>
       <width>71</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>3</string>
     </property>
    </widget>
    <widget class="QLabel" name="displayLed2">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>120</y>
+      <x>300</x>
+      <y>130</y>
       <width>71</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>2</string>
     </property>
    </widget>
    <widget class="QLabel" name="displayLed4">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>250</y>
+      <x>120</x>
+      <y>260</y>
       <width>71</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>4</string>
     </property>
    </widget>
    <widget class="QTableWidget" name="InoutTable">
@@ -258,41 +258,53 @@
    <widget class="QLineEdit" name="Edit4">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>210</y>
+      <x>70</x>
+      <y>220</y>
       <width>181</width>
       <height>131</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>4</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="Edit3">
     <property name="geometry">
      <rect>
-      <x>50</x>
-      <y>210</y>
+      <x>70</x>
+      <y>90</y>
       <width>191</width>
       <height>131</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>3</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="Edit2">
     <property name="geometry">
      <rect>
-      <x>240</x>
-      <y>80</y>
+      <x>260</x>
+      <y>90</y>
       <width>181</width>
       <height>121</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>2</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="Edit1">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>80</y>
+      <x>260</x>
+      <y>220</y>
       <width>191</width>
-      <height>121</height>
+      <height>131</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>1</string>
     </property>
    </widget>
   </widget>
