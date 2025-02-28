@@ -140,45 +140,6 @@ class WindowClass(QMainWindow):
         self.network_manager.send_data(user_data)
         self.groupBox.setVisible(True)
         
-    # def handle_response(self, data):
-    #     try:
-    #         response = json.loads(data)
-    #         if response.get("type") == "selectUserHistory":
-    #             history_data = response.get("data", [])
-    #             if not history_data:  # 데이터가 비어있다면
-    #                 QMessageBox.warning(self, "알림", "해당하는 유저 정보가 없습니다.")
-    #                 return
-                
-    #             history = history_data[0]  # 첫 번째 데이터 사용
-    #             # 입차/출차 시간 가져오기 (기본값: "0000-00-00 00:00:00")
-    #             indatetime = history.get("indatetime", "0000-00-00T00:00:00")
-    #             outdatetime = history.get("outdatetime", "0000-00-00T00:00:00")
-                
-    #             # QDateTime으로 변환
-    #             intime_dt = QDateTime.fromString(indatetime, "yyyy-MM-ddTHH:mm:ss")
-    #             outtime_dt = QDateTime.fromString(outdatetime, "yyyy-MM-ddTHH:mm:ss")
-                
-    #             # UI 업데이트
-    #             self.EditIntime.setDateTime(intime_dt)
-    #             self.EditOuttime.setDateTime(outtime_dt)
-                
-    #             pass_start_date = history.get("pass_start_date", "0000-00-00")
-    #             pass_expiration_date = history.get("pass_expiration_date", "0000-00-00")
-                
-    #             self.EditStart.setDate(QDate.fromString(pass_start_date, "yyyy-MM-dd"))
-    #             self.EditEnd.setDate(QDate.fromString(pass_expiration_date, "yyyy-MM-dd"))
-                
-    #             # 입차/출차 여부에 따라 Parking, OUT 표시 조정
-    #             has_indatetime = indatetime != "0000-00-00T00:00:00"
-    #             has_outdatetime = outdatetime != "0000-00-00T00:00:00"
-                
-    #             self.Parking.setVisible(has_indatetime)  # 입차 기록이 있으면 Parking 표시
-    #             self.OUT.setVisible(has_indatetime and has_outdatetime)  # 출차 기록까지 있으면 OUT 표시
-                
-    #             self.groupBox.setVisible(True)  # 데이터가 있을 때만 표시
-            
-    #     except json.JSONDecodeError as e:
-    #         print(f"[WindowClass] JSON Decode Error: {e}\n")
     
     def handle_response(self, data):
         try:
@@ -198,7 +159,7 @@ class WindowClass(QMainWindow):
                 indatetime = history.get("indatetime")
                 outdatetime = history.get("outdatetime")
                 
-                # 기본값 설정 (없을 경우 대비)
+                # 기본값 설정 
                 intime_dt = QDateTime.fromString(indatetime, "yyyy-MM-ddTHH:mm:ss") if indatetime else QDateTime()
                 outtime_dt = QDateTime.fromString(outdatetime, "yyyy-MM-ddTHH:mm:ss") if outdatetime else QDateTime()
                 
