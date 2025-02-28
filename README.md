@@ -183,7 +183,7 @@
 
 ![fire_event_20250227_183053](https://github.com/user-attachments/assets/a9fb0a6d-a20d-4373-89e0-23ddbc60f3eb)
 
-자동 저장 기능 
+영상이 자동으로 저장된다.
 
 
 ### 2-7. 이벤트 기록
