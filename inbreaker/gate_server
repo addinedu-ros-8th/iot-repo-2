@@ -1,0 +1,85 @@
+import RPi.GPIO as GPIO
+from mfrc522 import SimpleMFRC522
+import socket
+import time
+import struct
+from luma.oled.device import ssd1306
+from luma.core.interface.serial import i2c
+from luma.core.render import canvas
+from PIL import ImageFont
+
+SERVER_IP = "192.168.102.121"
+SERVER_PORT = 5000
+
+SERVO_PIN = 40
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(SERVO_PIN, GPIO.OUT)
+pwm = GPIO.PWM(SERVO_PIN, 50)
+pwm.start(0)
+
+reader = SimpleMFRC522()
+
+serial = i2c(port=1, address=0x3C)
+device = ssd1306(serial)
+font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+
+def display_text(text):
+    with canvas(device) as draw_canvas:
+        draw_canvas.text((0, 20), text, font=font, fill="white")
+
+def set_servo_angle(angle):
+    duty = (angle / 18) + 2
+    pwm.ChangeDutyCycle(duty)
+    time.sleep(0.2)
+    pwm.ChangeDutyCycle(0)
+
+def convert_to_big_endian(id):
+    return struct.pack('>Q', id)
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((SERVER_IP, SERVER_PORT))
+
+try:
+    while True:
+        print("Scan RFID tag...")
+        id, text = reader.read()
+        hex_id = hex(id)[2:].upper()
+
+        hex_id = hex_id[:8]
+
+        big_endian_id = convert_to_big_endian(id)
+        big_endian_hex = big_endian_id.hex().upper()
+
+        print(f"Tag detected: ID={big_endian_hex}, Data={text.strip()}")
+
+        message = f'in/RFID {big_endian_hex}\n'.encode()
+        client_socket.sendall(message)
+
+        data = client_socket.recv(1024).decode().strip()
+        print(f"Server response: {data}")
+
+        if len(data) > 4 and data[-4:] == "PASS" and data[:-4].isdigit():
+            pass_number = int(data[:-4])
+            print(f"Remaining slots: {pass_number}")
+            display_text(f"Left space : {pass_number}")
+            set_servo_angle(90)
+            time.sleep(3)
+            set_servo_angle(0)
+
+            client_socket.sendall(b'in/PASSOK')
+
+        elif len(data) > 4 and data[-4:] == "FAIL" and data[:-4].isdigit():
+            print("Access failed.")
+            display_text("invalid num")
+            set_servo_angle(0)
+            time.sleep(3)
+
+            client_socket.sendall(b'in/FAILOK')
+
+        time.sleep(2)
+
+except KeyboardInterrupt:
+    print("Program terminated")
+finally:
+    client_socket.close()
+    GPIO.cleanup()
