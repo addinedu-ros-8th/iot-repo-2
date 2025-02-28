@@ -214,4 +214,6 @@
 
 
 마지막 기록으로 보여준다
+
+
 ![image](https://github.com/user-attachments/assets/92d7192f-42fa-4c8e-8b40-5656aeb44514)
