@@ -102,33 +102,37 @@
 ## 1-1. 입구 
 
 
-![IMG_9657 (1)](https://github.com/user-attachments/assets/85c8c2e2-75e2-4a43-ae8e-26b423895af4)
+![IMG_1](./image/1.gif)
+
+![IMG_2](./image/2.gif)
 
 
 * 정기권이 없으면 안 열어준다.
 
 
 ### 만차
-![IMG_9669 (1)](https://github.com/user-attachments/assets/669ec910-cd9c-47a8-9073-3a0467950287)
+![3](./image/3.gif)
 
 * 만차일 시 OLED에 표시하고 열어주지 않는다.
 
 
 ### 1-2. 출구 
 
-![image](https://github.com/user-attachments/assets/e66fde67-9956-4479-a230-08d26778e664)
+![7](./image/7.gif)
 
 
 
 ### 1-3. 주차
-![20250227_194730_4 (1)](https://github.com/user-attachments/assets/38550fa6-4dce-4ff8-b0ab-c520eaa0045f)
+![4](./image/4.gif)
 
 
 주차된 수에 따라 OLED가 바뀐다. 
 
 
 ### 1-4. 화재 
-![image](https://github.com/user-attachments/assets/2da2be29-c99c-4761-a03b-9fd79385a012)
+![5](./image/5.gif)
+
+![6](./image/6.gif)
 
 
 자동으로 화재가 난 곳으로 카메라를 돌린다.
